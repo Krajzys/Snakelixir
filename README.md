@@ -3,6 +3,7 @@
 ## What is Snakelixir
 
 Snakelixir is a simple browser snake game, made with phoenix library, in Elixir programming language.
+We kicked off this project on 2021.05.07
 
 ## Useful links
 
