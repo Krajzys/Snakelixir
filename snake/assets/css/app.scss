@@ -88,3 +88,14 @@
   display: block;
   margin: -1rem 0 2rem;
 }
+
+@import "./game.css";
+
+html {
+  background: #292a2d;
+  color: #a9a9b3;
+}
+
+body {
+  margin: 0;
+}

@@ -14,10 +14,16 @@ defmodule SnakeWeb.Router do
     plug :accepts, ["json"]
   end
 
+  # scope "/", SnakeWeb do
+  #   pipe_through :browser
+
+  #   live "/", PageLive, :index
+  # end
+
   scope "/", SnakeWeb do
     pipe_through :browser
 
-    live "/", PageLive, :index
+    get "/", GameController, :index
   end
 
   # Other scopes may use custom stacks.
