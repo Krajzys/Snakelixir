@@ -4,17 +4,18 @@ defmodule Snake.Snake do
     score: 0,
     points: [],
     apples: 0,
-    direction: "right" # TUTUAJ LOSOWANIE, BAZUJĄCE NA POŁOŻENIU WZGLĘDEM KRAWĘDZI
+    direction: "right" # TUTAJ LOSOWANIE, BAZUJĄCE NA POŁOŻENIU WZGLĘDEM KRAWĘDZI
   ]
 
+  # TODO: REPLACE STRINGS FOR DIRECTIONS WITH ATOMS?
 
   def new() do
     __struct__()
   end
 
 
-  def new_random(_board_width, _board_height, player_name) do
-    starting_point = Snake.Point.new_random(_board_width, _board_height)
+  def new_random(_board_width, _board_height, _taken_points, player_name) do
+    starting_point = Snake.Point.new_random(_board_width, _board_height, _taken_points)
     %__MODULE__{ # HM? czy module dziala
       name: player_name,
       score: 0,
@@ -37,8 +38,7 @@ defmodule Snake.Snake do
 
 
   def start_direction(board_width, board_height, starting_position) do
-    # TODO: CHECK IF POSITION WITHIN BOARD DIMS?
-
+    # TODO: CHECK IF POSITION WITHIN BOARD DIMS? HM IT HAS TO BE
     # TODO: GET AVAILABLE POSITIONS BECAUSE OF THE OTHER SNAKE???
 
     available_directions = ["left", "right", "down", "up"]
@@ -53,6 +53,7 @@ defmodule Snake.Snake do
     end_width_safety_margin = width_index - start_width_safety_margin
     end_height_safety_margin = height_index - start_height_safety_margin
 
+    # TODO: DODAC RAZEM WYKLUCZAJACE SIE KIERUNKI
     available_directions = case {x, y} do
       {horizontal_wall, _} when horizontal_wall in 0..start_width_safety_margin -> available_directions -- ["left"]
       _ -> available_directions
@@ -83,26 +84,29 @@ defmodule Snake.Snake do
   end
 
   # TODO: on keypress
+  # TODO: szybka zmiana kierunku -> handler/blokada
   def change_direction(snake, new_direction) do
+    old_direction = snake.direction
     case new_direction do
-      snake.direction ->
+      old_direction ->
         snake
-      "left" when snake.direction == "right" ->
+      "left" when old_direction == "right" ->
         snake
-      "right" when snake.direction == "left" ->
+      "right" when old_direction == "left" ->
         snake
-      "up" when snake.direction == "down" ->
+      "up" when old_direction == "down" ->
         snake
-      "down" when snake.direction == "up" ->
+      "down" when old_direction == "up" ->
         snake
         _ -> %{snake| direction: new_direction}
     end
   end
 
 
+  # TODO: ROZWIAZAC PROBLEM PRZEKAZYWANIA PARAMETRU DRUGIEGO SNAK'E
   def move_direction(snake) do
     # COND ZWROCI WYNIK MOVE_DIR CZYLI WEZA Z ZAKTUALIZWOANYMI DANYMI
-    cond do
+    moved_snake = cond do
       snake.direction == "left" ->
         move_left(snake)
       snake.direction == "right" ->
@@ -112,7 +116,6 @@ defmodule Snake.Snake do
       snake.direction == "down" ->
         move_down(snake)
     end
-    # TODO: ADD COLLISION CHECKS!
   end
 
   def move(snake) do
@@ -147,10 +150,54 @@ defmodule Snake.Snake do
     # TODO:
   end
 
-  # LISTA SNAKOW CZY RACZEJ DWA ARGUMETY
-  def check_collision(snake_list, board) do
-    # TODO: CHECK POINTS THAT ARE TAKEN AND IF OUT OF MAP
-    # PASS TEH HOLE BOARD OBJ OR JUST DIMENSIONS AS A TUPLE?
+  # TODO: LISTA SNAKOW CZY RACZEJ DWA ARGUMETY
+  # TODO: MUSI BYC WYKONAA FUNKCJA PO move_direction
+  # NIE JEST WYWOŁANA BEZPOŚREDNIO Z MOVE)DIRECTION BO NIE MA ONA WIEDZY O STANIE 2 SNAKE'a
+  def check_collision(moved_snake, board_width, board_height, other_snake_points, apple_point) do
+     # TODO: ADD APPLE CHECK
+    # EATING ...
+    # TODO: PRZECHOWYWANIE STANU ROSNIECIA SNAKE'a
+
+    [head | tail] = moved_snake
+    {hx, hy} = head.coordinates
+
+    # WALL COLLISION
+    wall_collision_check = hx > 0 && hx < board_width && hy > 0 && hy < board_height
+
+    case wall_collision_check do
+        false ->
+          :snake_dead
+        true ->
+          # SNAKE COLLISION
+          snake_collision_check = Enum.any?(other_snake_points, fn(other_snake_point) -> head == other_snake_point end)
+          case snake_collision_check do
+            true ->
+              :snake_dead
+            false ->
+              moved_snake # TODO: CZY TUTAJ JAKIS NAJEDZONY SNAKE?
+          end
+    end
+
+    # FIXME: DO USUNIECIA JAK ZWERYFIKUJE ZE DOBRZE MYSLALEM O 24 xD
+    # SEEMS REDUNDANT AFTER I WROTE IT, BETTER TO JUST CHECK THE HEAD
+    # WALL COLLISION
+    # collision_check =
+    #   Enum.each(moved_snake.points, fn({x, y}) -> x>0 && x<board_width && y>0 && y<board_height end)
+    #     |> Enum.all(fn(check_val) -> check_val == true)
+    # case collision_check do
+    #   false ->
+    #     :snake_dead
+    #   true ->
+    #     # SNAKE COLLISION
+    #     result = Enum.each(moved_snake.points, fn(snake_point) -> !Enum.any?(taken_points, fn(taken_point) -> snake_point == taken_point end) end)
+    #       |> Enum.all(fn(check_val) -> check_val == true)
+    #     case result do
+    #       false ->
+    #         :snake_dead
+    #       true ->
+    #         moved_snake
+    #     end
+    # end
   end
 
 end

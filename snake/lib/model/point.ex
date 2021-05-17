@@ -8,18 +8,17 @@ defmodule Snake.Point do
     __struct__()
   end
 
-  def new_random(_board_height, _board_width) do
+  def new_random(_board_width, _board_height, _points_taken) do
     %__MODULE__{ # HM? czy module dziala
       color: random_color(),
-      coordinates: random_coordinates(_board_height, _board_width)
+      coordinates: random_coordinates(_board_width, _board_height, _points_taken)
     }
   end
 
-  # TODO:
-  def new_apple() do
+  def new_apple(_board_width, _board_height, _points_taken) do
     %{ # HM? czy module dziala
     color: random_color(),
-    coordinates: random_coordinates(_board_height, _board_width)
+    coordinates: random_coordinates(_board_width, _board_height, _points_taken)
   }
   end
 
@@ -30,11 +29,16 @@ defmodule Snake.Point do
     |> List.first
   end
 
-  def random_coordinates(board_height, board_width) do
+  def random_coordinates(board_height, board_width, points_taken) do
     # range 0..n
     board_height = board_height - 1
     board_width = board_width - 1
-    {Enum.random(0..board_width), Enum.random(0..board_height)}
+
+    available_points =
+      Enum.map(0..board_width, fn(i) -> Enum.map(0..board_height, fn(j) -> {i, j} end) end)
+      |> List.flatten()
+      |> Enum.filter(fn(point) -> !Enum.any?(points_taken, fn(taken_point) -> taken_point == point end) end)
+    Enum.random(available_points)
   end
 
   def move_down(point) do

@@ -3,12 +3,13 @@ defmodule Snake.Board do
     width: 0,
     height: 0,
     snakes: [],
-    apples: []
+    apples: [],
+    points_taken: []
   ]
 
   def new() do
     __struct__()
   end
-  # APPLE SPAWING
+  # APPLE SPAWNING
 
 end
