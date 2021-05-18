@@ -1,4 +1,4 @@
-defmodule Snake.Point do
+defmodule Model.Point do
   defstruct [
     color: "red",
     coordinates: {0, 0}
@@ -23,13 +23,13 @@ defmodule Snake.Point do
   end
 
 
-  def random_color() do
+  defp random_color() do
     ["blue", "red", "green", "yellow"]
     |> Enum.shuffle()
     |> List.first
   end
 
-  def random_coordinates(board_height, board_width, points_taken) do
+  defp random_coordinates(board_height, board_width, points_taken) do
     # range 0..n
     board_height = board_height - 1
     board_width = board_width - 1

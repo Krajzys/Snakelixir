@@ -1,4 +1,7 @@
-defmodule Snake.Snake do
+defmodule Model.Snake do
+
+  # alias Model.Point, as: Point
+
   defstruct [
     name: "player -",
     score: 0,
@@ -15,7 +18,7 @@ defmodule Snake.Snake do
 
 
   def new_random(_board_width, _board_height, _taken_points, player_name) do
-    starting_point = Snake.Point.new_random(_board_width, _board_height, _taken_points)
+    starting_point = Model.Point.new_random(_board_width, _board_height, _taken_points)
     %__MODULE__{ # HM? czy module dziala
       name: player_name,
       score: 0,
@@ -25,7 +28,8 @@ defmodule Snake.Snake do
     }
   end
 
-  # We dont wanna spawn and immediately have our snake smashed againts the wall, now do we?
+  # We don't wanna spawn and immediately have our snake smashed againts the wall, now do we?
+  # Could be resolved by the snake remaining stationary untill first direction is chosen
   def safety_margin(value) do
     case value do
       1 -> 0
@@ -125,25 +129,25 @@ defmodule Snake.Snake do
   def move_down(snake) do
     head = hd(snake.points)
     removed_tail = snake.points |> Enum.reverse() |> tl() |> Enum.reverse()
-    %{snake| points: [Snake.Point.move_down(head) | removed_tail]}
+    %{snake| points: [Model.Point.move_down(head) | removed_tail]}
   end
 
   def move_up(snake) do
     head = hd(snake.points)
     removed_tail = snake.points |> Enum.reverse() |> tl() |> Enum.reverse()
-    %{snake| points: [Snake.Point.move_up(head) | removed_tail]}
+    %{snake| points: [Model.Point.move_up(head) | removed_tail]}
   end
 
   def move_left(snake) do
     head = hd(snake.points)
     removed_tail = snake.points |> Enum.reverse() |> tl() |> Enum.reverse()
-    %{snake| points: [Snake.Point.move_left(head) | removed_tail]}
+    %{snake| points: [Model.Point.move_left(head) | removed_tail]}
   end
 
   def move_right(snake) do
     head = hd(snake.points)
     removed_tail = snake.points |> Enum.reverse() |> tl() |> Enum.reverse()
-    %{snake| points: [Snake.Point.move_right(head) | removed_tail]}
+    %{snake| points: [Model.Point.move_right(head) | removed_tail]}
   end
 
   def eat(snake) do
@@ -198,6 +202,23 @@ defmodule Snake.Snake do
     #         moved_snake
     #     end
     # end
+  end
+
+  # TODO: IDEA -> would be cool to implement because PvP
+  # Timebar based dash that regenerates once every N seconds and makes the snake traverse a couple blocks in one quantum of time.
+  def dash() do
+
+  end
+
+  # TODO: IDEA -> same as dash
+  # Once the snake eats a given N number of apples it can spit out a fireball (the bigger you are the more you fireballs you get?):
+  #   if the fireball hits the opponent, its blocks are removed from the hit-block down.
+  #   headshots are insta-kill
+  #   would have to tinker with the ball's speed to get it right
+  # It boils down to creating a new point with custom graphics that is moved a certain direction, doesnt even have to be a module,
+  # the direction could be taken from the snake and memorized in the game loop
+  def fire() do
+
   end
 
 end

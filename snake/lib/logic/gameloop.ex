@@ -1,4 +1,14 @@
+defmodule Logic.GameLoop do
 
+
+  def game_loop() do
+
+
+
+  end
+
+
+end
 
 
 # CREATE BOARD
@@ -6,7 +16,6 @@
 # CREATE APPLE
 
 # while true:
-
 #   snake1_dir = input1()
 #   snake2_dir = input2()
 
