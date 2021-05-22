@@ -1,13 +1,16 @@
 defmodule Model.Snake do
 
-  # alias Model.Point, as: Point
+  alias Model.Point, as: Point
 
   defstruct [
     name: "player -",
     score: 0,
     points: [],
     apples: 0,
-    direction: "right" # TUTAJ LOSOWANIE, BAZUJĄCE NA POŁOŻENIU WZGLĘDEM KRAWĘDZI
+    direction: "right", # TUTAJ LOSOWANIE, BAZUJĄCE NA POŁOŻENIU WZGLĘDEM KRAWĘDZI
+    food: False,
+    fire: False,
+    dash: False
   ]
 
   # TODO: REPLACE STRINGS FOR DIRECTIONS WITH ATOMS?
@@ -18,18 +21,21 @@ defmodule Model.Snake do
 
 
   def new_random(_board_width, _board_height, _taken_points, player_name) do
-    starting_point = Model.Point.new_random(_board_width, _board_height, _taken_points)
-    %__MODULE__{ # HM? czy module dziala
+    starting_point = Point.new_random(_board_width, _board_height, _taken_points)
+    %__MODULE__{ # TODO: CHECKOUT HM? czy module dziala
       name: player_name,
       score: 0,
       points: [starting_point],
       apples: 0,
       direction: start_direction(_board_width, _board_height, starting_point)
+      food: False,
+      fire: False,
+      dash: False
     }
   end
 
   # We don't wanna spawn and immediately have our snake smashed againts the wall, now do we?
-  # Could be resolved by the snake remaining stationary untill first direction is chosen
+  # Could be resolved by the snake remaining stationary until first direction is chosen
   def safety_margin(value) do
     case value do
       1 -> 0
@@ -107,10 +113,9 @@ defmodule Model.Snake do
   end
 
 
-  # TODO: ROZWIAZAC PROBLEM PRZEKAZYWANIA PARAMETRU DRUGIEGO SNAK'E
   def move_direction(snake) do
     # COND ZWROCI WYNIK MOVE_DIR CZYLI WEZA Z ZAKTUALIZWOANYMI DANYMI
-    moved_snake = cond do
+    cond do
       snake.direction == "left" ->
         move_left(snake)
       snake.direction == "right" ->
@@ -123,90 +128,93 @@ defmodule Model.Snake do
   end
 
   def move(snake) do
-    # TODO: SKROCENIE INNYCH MOVE?
+    head = hd(snake.points)
+    cond snake.food ->
+      True ->
+        %{snake| food: False}
+      False ->
+        removed_tail = snake.points |> Enum.reverse() |> tl() |> Enum.reverse()
+        %{snake| points: [head | removed_tail]}
   end
 
   def move_down(snake) do
+    snake = move(snake)
     head = hd(snake.points)
-    removed_tail = snake.points |> Enum.reverse() |> tl() |> Enum.reverse()
-    %{snake| points: [Model.Point.move_down(head) | removed_tail]}
+    tail = tl(snake.points)
+    %{snake| points: [Point.move_down(head) | tail]}
   end
 
   def move_up(snake) do
+    snake = move(snake)
     head = hd(snake.points)
-    removed_tail = snake.points |> Enum.reverse() |> tl() |> Enum.reverse()
-    %{snake| points: [Model.Point.move_up(head) | removed_tail]}
+    tail = tl(snake.points)
+    %{snake| points: [Point.move_up(head) | tail]}
   end
 
   def move_left(snake) do
+    snake = move(snake)
     head = hd(snake.points)
-    removed_tail = snake.points |> Enum.reverse() |> tl() |> Enum.reverse()
-    %{snake| points: [Model.Point.move_left(head) | removed_tail]}
+    tail = tl(snake.points)
+    %{snake| points: [Point.move_left(head) | tail]}
   end
 
   def move_right(snake) do
+    snake = move(snake)
     head = hd(snake.points)
-    removed_tail = snake.points |> Enum.reverse() |> tl() |> Enum.reverse()
-    %{snake| points: [Model.Point.move_right(head) | removed_tail]}
-  end
-
-  def eat(snake) do
-    # TODO:
+    tail = tl(snake.points)
+    %{snake| points: [Point.move_right(head) | tail]}
   end
 
   # TODO: LISTA SNAKOW CZY RACZEJ DWA ARGUMETY
   # TODO: MUSI BYC WYKONAA FUNKCJA PO move_direction
   # NIE JEST WYWOŁANA BEZPOŚREDNIO Z MOVE)DIRECTION BO NIE MA ONA WIEDZY O STANIE 2 SNAKE'a
   def check_collision(moved_snake, board_width, board_height, other_snake_points, apple_point) do
-     # TODO: ADD APPLE CHECK
-    # EATING ...
-    # TODO: PRZECHOWYWANIE STANU ROSNIECIA SNAKE'a
 
     [head | tail] = moved_snake
     {hx, hy} = head.coordinates
+
+    # MARK IF SHOULD EAT, INC SCORE
+    moved_snake =
+      cond apple_point.coordinates do
+        {hx, hy} ->
+          new_score =
+            cond moved_snake.score do
+              0 ->
+                100
+              1 -> 200
+              _ -> Integer.pow(moved_snake.score, moved_snake.apples)
+            end
+          %{moved_snake| score: new_score, apples: moved_snake.apples + 1, food: True}
+        _ ->
+          moved_snake
+      end
 
     # WALL COLLISION
     wall_collision_check = hx > 0 && hx < board_width && hy > 0 && hy < board_height
 
     case wall_collision_check do
         false ->
-          :snake_dead
+          {:snake_dead, moved_snake}
         true ->
           # SNAKE COLLISION
           snake_collision_check = Enum.any?(other_snake_points, fn(other_snake_point) -> head == other_snake_point end)
           case snake_collision_check do
             true ->
-              :snake_dead
+              {:snake_dead, moved_snake}
             false ->
-              moved_snake # TODO: CZY TUTAJ JAKIS NAJEDZONY SNAKE?
+              cond moved_snake.food ->
+                True ->
+                  {:snake_eat, moved_snake}
+                False ->
+                  {:snake_alive, moved_snake}
           end
     end
-
-    # FIXME: DO USUNIECIA JAK ZWERYFIKUJE ZE DOBRZE MYSLALEM O 24 xD
-    # SEEMS REDUNDANT AFTER I WROTE IT, BETTER TO JUST CHECK THE HEAD
-    # WALL COLLISION
-    # collision_check =
-    #   Enum.each(moved_snake.points, fn({x, y}) -> x>0 && x<board_width && y>0 && y<board_height end)
-    #     |> Enum.all(fn(check_val) -> check_val == true)
-    # case collision_check do
-    #   false ->
-    #     :snake_dead
-    #   true ->
-    #     # SNAKE COLLISION
-    #     result = Enum.each(moved_snake.points, fn(snake_point) -> !Enum.any?(taken_points, fn(taken_point) -> snake_point == taken_point end) end)
-    #       |> Enum.all(fn(check_val) -> check_val == true)
-    #     case result do
-    #       false ->
-    #         :snake_dead
-    #       true ->
-    #         moved_snake
-    #     end
-    # end
   end
 
   # TODO: IDEA -> would be cool to implement because PvP
   # Timebar based dash that regenerates once every N seconds and makes the snake traverse a couple blocks in one quantum of time.
-  def dash() do
+  def dash(snake) do
+
 
   end
 

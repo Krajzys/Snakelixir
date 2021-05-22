@@ -16,8 +16,8 @@ defmodule Model.Point do
   end
 
   def new_apple(_board_width, _board_height, _points_taken) do
-    %{ # HM? czy module dziala
-    color: random_color(),
+    %{
+    color: "red", # ADD SPECIFIC COLOR
     coordinates: random_coordinates(_board_width, _board_height, _points_taken)
   }
   end
@@ -59,6 +59,6 @@ defmodule Model.Point do
   def move_left(point) do
     {x, y} = point.coordinates
     %{point| coordinates: {x+1, y}}
-    end
+  end
 
 end
