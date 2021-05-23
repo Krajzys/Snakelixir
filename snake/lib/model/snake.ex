@@ -27,7 +27,7 @@ defmodule Model.Snake do
       score: 0,
       points: [starting_point],
       apples: 0,
-      direction: start_direction(_board_width, _board_height, starting_point)
+      direction: start_direction(_board_width, _board_height, starting_point),
       food: False,
       fire: False,
       dash: False
@@ -129,12 +129,13 @@ defmodule Model.Snake do
 
   def move(snake) do
     head = hd(snake.points)
-    cond snake.food ->
+    case snake.food do
       True ->
         %{snake| food: False}
       False ->
         removed_tail = snake.points |> Enum.reverse() |> tl() |> Enum.reverse()
         %{snake| points: [head | removed_tail]}
+    end
   end
 
   def move_down(snake) do
@@ -175,10 +176,10 @@ defmodule Model.Snake do
 
     # MARK IF SHOULD EAT, INC SCORE
     moved_snake =
-      cond apple_point.coordinates do
+      case apple_point.coordinates do
         {hx, hy} ->
           new_score =
-            cond moved_snake.score do
+            case moved_snake.score do
               0 ->
                 100
               1 -> 200
@@ -202,11 +203,12 @@ defmodule Model.Snake do
             true ->
               {:snake_dead, moved_snake}
             false ->
-              cond moved_snake.food ->
+              case moved_snake.food do
                 True ->
                   {:snake_eat, moved_snake}
                 False ->
                   {:snake_alive, moved_snake}
+              end
           end
     end
   end

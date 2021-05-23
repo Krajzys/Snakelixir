@@ -42,13 +42,13 @@ defmodule Logic.GameLoop do
       snake_new_dir = Snake.change_direction(current_snake, new_direction)
       moved_snake = Snake.move_direction(snake_new_dir)
 
-      updated_snake_map = Map.put(updated_snake_map, snake_name, %{updated_snake_map[snake_name]| "snake": moved})
+      updated_snake_map = Map.put(updated_snake_map, snake_name, %{updated_snake_map[snake_name]| "snake": moved_snake}) # tutaj snake_moved? bylo moved
     end)
 
     snake_map = updated_snake_map
 
     # STANY KTO GDZIE WPADL?
-    snakes_statuses = Enum.each(snake_map, fn({snake_name, snake_data}) ->
+    snakes_statuses = Enum.map(snake_map, fn({snake_name, snake_data}) ->
       other_snake = List.delete(Map.keys(snake_map), snake_name) # ZROBIONE DLA 2 snakow;
 
       moved_snake = snake_data["snake"]
@@ -57,29 +57,35 @@ defmodule Logic.GameLoop do
 
       {snake_status, snake} = Snake.check_collision(moved_snake, board_width, board_height, other_snake_points, food.coordinates)
       game_status =
-        cond snake_status do
+        case snake_status do
           :snake_dead ->
             IO.puts(snake_name + " is dead!")
             # TODO: CO DALEJ?
             :game_stop
           :snake_alive ->
             # TODO: CZY ZADZIALA ZMIENNA snake_name ??
-            updated_snake_map = Map.put(updated_snake_map, snake_name, %{updated_snake_map[snake_name]| "snake": moved})
+            updated_snake_map = Map.put(updated_snake_map, snake_name, %{updated_snake_map[snake_name]| "snake": moved_snake})
             :game_ok
           :snake_eat ->
-            updated_snake_map = Map.put(updated_snake_map, snake_name, %{updated_snake_map[snake_name]| "snake": moved})
+            updated_snake_map = Map.put(updated_snake_map, snake_name, %{updated_snake_map[snake_name]| "snake": moved_snake})
             :game_food  # TODO: SYGNAL ZE JEDZENIE ZJEDZONE I MA ZNIKNAC
-          end
+        end
     end)
 
-    cond game_status do
+
+    case snakes_statuses do
 
       :game_stop ->
         # todo:
+        0
       :game_food ->
         # give food new location
+        0
       :game_ok ->
         # stuff
+        0
+      _ ->
+        0
     end
 
     # TODO: CZY JA MOGE DOSTAC SIE DO GAME_STATUS POZA JEGO SCOPEM??
