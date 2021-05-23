@@ -15,8 +15,8 @@ defmodule Model.Snake do
 
   # TODO: REPLACE STRINGS FOR DIRECTIONS WITH ATOMS?
 
-  def new() do
-    __struct__()
+  def new(options \\ []) do
+    __struct__(options)
   end
 
 

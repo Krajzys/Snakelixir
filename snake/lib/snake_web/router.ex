@@ -17,6 +17,7 @@ defmodule SnakeWeb.Router do
   scope "/", SnakeWeb do
     pipe_through :browser
 
+    live "/game", GameLive
     live "/", PageLive, :index
   end
 

@@ -7,19 +7,19 @@ defmodule Model.Board do
     points_taken: []
   ]
 
-  def new() do
-    __struct__()
+  def new(options \\ []) do
+    __struct__(options)
   end
 
-  def new_params(width, height, snakes, apples, points_taken) do
-    %{
-      width: width,
-      height: height,
-      snakes: [],
-      apples: [],
-      points_taken: []
-    }
-  end
+  # def new_params(width, height, snakes, apples, points_taken) do
+  #   %{
+  #     width: width,
+  #     height: height,
+  #     snakes: [],
+  #     apples: [],
+  #     points_taken: []
+  #   }
+  # end
   # APPLE SPAWNING
 
 end
