@@ -1,6 +1,6 @@
 defmodule Model.Point do
   defstruct [
-    color: "red",
+    color: :red,
     coordinates: {0, 0}
   ]
 
@@ -17,14 +17,23 @@ defmodule Model.Point do
 
   def new_apple(_board_width, _board_height, _points_taken) do
     %{
-    color: "red", # ADD SPECIFIC COLOR
+    color: :red, # ADD SPECIFIC COLOR
     coordinates: random_coordinates(_board_width, _board_height, _points_taken)
-  }
+    }
+  end
+
+  def new_fireball(coordinates, direction_function, id) do
+    %{
+      color: :yellow,
+      coordinates: coordinates,
+      direction: direction_function,
+      snake_id: id
+    }
   end
 
 
   defp random_color() do
-    ["blue", "red", "green", "yellow"]
+    [:blue, :red, :green, :yellow]
     |> Enum.shuffle()
     |> List.first
   end
@@ -56,9 +65,53 @@ defmodule Model.Point do
     %{point| coordinates: {x-1, y}}
   end
 
-  def move_left(point) do
+  def move_right(point) do
     {x, y} = point.coordinates
     %{point| coordinates: {x+1, y}}
   end
+
+  def check_fireball_collision(fireball, board_width, board_height, snake_points, apple_point, fireball_points) do
+    fireball_coordinates = fireball.coordinates
+    {fx, fy} = fireball_coordinates
+
+    # CO JAK FIREBALLE MAJA KOLIZE!!!??? TO TEZ WYBUCHAJA
+
+    border_check = fx > 0 && fx < board_width && fy > 0 && fy < board_height
+
+    case border_check do
+      True ->
+        snake_hit_point = Enum.filter(snake_points, fn(snake_point) -> snake_point == fireball_coordinates end)
+        hit_point_status = length(snake_hit_point)
+        fireball_hit_point = Enum.filter(fireball_points, fn(fireball_point) -> fireball_point == fireball_coordinates end)
+        # fireball_point_status = length(fireball_hit_point)
+        # fireball_points_expired =
+        #   case fireball_point_status do
+        #     0 ->
+        #       fireball_hit_point
+        #     _ -> [fireball_coordinates | fireball_hit_point] # LIST OF ALL POINTS TO REMOVE
+        #   end
+
+        case hit_point_status do
+          0 ->
+            case fireball_coordinates do
+              apple_point ->
+                {:apple_destroyed, apple_point, fireball, fireball_hit_point}
+              _ ->
+                {:ok, nil, fireball, fireball_hit_point}
+            end
+          1 ->
+            {:snake_hit, hd(hit_point_status), fireball, fireball_hit_point}
+          _ ->
+            IO.puts("Snake hit point Error!")
+        end
+      False ->
+        {:no_ok, nil, fireball, nil}
+    end
+
+
+  end
+
+
+
 
 end

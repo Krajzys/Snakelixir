@@ -3,11 +3,12 @@ defmodule Model.Snake do
   alias Model.Point, as: Point
 
   defstruct [
+    id: 0,
     name: "player -",
     score: 0,
     points: [],
     apples: 0,
-    direction: "right", # TUTAJ LOSOWANIE, BAZUJĄCE NA POŁOŻENIU WZGLĘDEM KRAWĘDZI
+    direction: :right, # TUTAJ LOSOWANIE, BAZUJĄCE NA POŁOŻENIU WZGLĘDEM KRAWĘDZI
     food: False,
     fire: False,
     dash: False
@@ -20,9 +21,10 @@ defmodule Model.Snake do
   end
 
 
-  def new_random(_board_width, _board_height, _taken_points, player_name) do
+  def new_random(_board_width, _board_height, _taken_points, player_name, id) do
     starting_point = Point.new_random(_board_width, _board_height, _taken_points)
     %__MODULE__{ # TODO: CHECKOUT HM? czy module dziala
+      id: id,
       name: player_name,
       score: 0,
       points: [starting_point],
@@ -51,7 +53,7 @@ defmodule Model.Snake do
     # TODO: CHECK IF POSITION WITHIN BOARD DIMS? HM IT HAS TO BE
     # TODO: GET AVAILABLE POSITIONS BECAUSE OF THE OTHER SNAKE???
 
-    available_directions = ["left", "right", "down", "up"]
+    available_directions = [:left, :right, :down, :up]
     {x, y} = starting_position
 
     width_index = board_width-1
@@ -65,22 +67,22 @@ defmodule Model.Snake do
 
     # TODO: DODAC RAZEM WYKLUCZAJACE SIE KIERUNKI
     available_directions = case {x, y} do
-      {horizontal_wall, _} when horizontal_wall in 0..start_width_safety_margin -> available_directions -- ["left"]
+      {horizontal_wall, _} when horizontal_wall in 0..start_width_safety_margin -> available_directions -- [:left]
       _ -> available_directions
     end
     # IO.puts(["available dirs == ", Enum.join(available_directions, " ")]) # DEBUG
     available_directions = case {x, y} do
-      {_, vertical_wall} when vertical_wall in 0..start_height_safety_margin -> available_directions -- ["up"]
+      {_, vertical_wall} when vertical_wall in 0..start_height_safety_margin -> available_directions -- [:up]
       _ -> available_directions
     end
     # IO.puts(["available dirs == ", Enum.join(available_directions, " ")]) # DEBUG
     available_directions = case {x, y} do
-      {horizontal_wall, _} when horizontal_wall in width_index..end_width_safety_margin -> available_directions -- ["right"]
+      {horizontal_wall, _} when horizontal_wall in width_index..end_width_safety_margin -> available_directions -- [:right]
       _ -> available_directions
     end
     # IO.puts(["available dirs == ", Enum.join(available_directions, " ")]) # DEBUG
     available_directions = case {x, y} do
-      {_, vertical_wall} when vertical_wall in height_index..end_height_safety_margin -> available_directions -- ["down"]
+      {_, vertical_wall} when vertical_wall in height_index..end_height_safety_margin -> available_directions -- [:down]
       _ -> available_directions
     end
     # IO.puts(["available dirs == ", Enum.join(available_directions, " ")]) # DEBUG
@@ -100,13 +102,13 @@ defmodule Model.Snake do
     case new_direction do
       old_direction ->
         snake
-      "left" when old_direction == "right" ->
+      :left when old_direction == :right ->
         snake
-      "right" when old_direction == "left" ->
+      :right when old_direction == :left ->
         snake
-      "up" when old_direction == "down" ->
+      :up when old_direction == :down ->
         snake
-      "down" when old_direction == "up" ->
+      :down when old_direction == :up ->
         snake
         _ -> %{snake| direction: new_direction}
     end
@@ -115,27 +117,26 @@ defmodule Model.Snake do
 
   def move_direction(snake) do
     # COND ZWROCI WYNIK MOVE_DIR CZYLI WEZA Z ZAKTUALIZWOANYMI DANYMI
-    cond do
-      snake.direction == "left" ->
+    case snake.direction do
+      :left ->
         move_left(snake)
-      snake.direction == "right" ->
+      :right ->
         move_right(snake)
-      snake.direction == "up" ->
+      :up ->
         move_up(snake)
-      snake.direction == "down" ->
+      :down ->
         move_down(snake)
     end
   end
 
   def move(snake) do
     head = hd(snake.points)
-    case snake.food do
+    cond snake.food ->
       True ->
         %{snake| food: False}
       False ->
         removed_tail = snake.points |> Enum.reverse() |> tl() |> Enum.reverse()
         %{snake| points: [head | removed_tail]}
-    end
   end
 
   def move_down(snake) do
@@ -176,10 +177,10 @@ defmodule Model.Snake do
 
     # MARK IF SHOULD EAT, INC SCORE
     moved_snake =
-      case apple_point.coordinates do
+      cond apple_point.coordinates do
         {hx, hy} ->
           new_score =
-            case moved_snake.score do
+            cond moved_snake.score do
               0 ->
                 100
               1 -> 200
@@ -203,7 +204,7 @@ defmodule Model.Snake do
             true ->
               {:snake_dead, moved_snake}
             false ->
-              case moved_snake.food do
+              case moved_snake.food -> do
                 True ->
                   {:snake_eat, moved_snake}
                 False ->
@@ -227,8 +228,27 @@ defmodule Model.Snake do
   #   would have to tinker with the ball's speed to get it right
   # It boils down to creating a new point with custom graphics that is moved a certain direction, doesnt even have to be a module,
   # the direction could be taken from the snake and memorized in the game loop
-  def fire() do
 
+  # Invoked after moving and collision checks?
+  # HAS TO MOVE FASTER THAN THE SNAKE XD
+  def fire(snake, board_width, board_height, other_snake_points, apple_point) do
+
+    # FIRE DESTROYS APPLES
+
+    snake_head = hd(snake.points)
+
+    {fireball, move_direction_func} =
+      case snake.direction do
+        :left ->
+          {Point.move_left(snake_head), &Point.move_left/1}
+        :right ->
+          {Point.move_right(snake_head), &Point.move_right/1}
+        :up ->
+          {Point.move_up(snake_head), &Point.move_up/1}
+        :down ->
+          {Point.move_down(snake_head), &Point.move_down/1}
+      end
+
+    Point.new_fireball(fireball.coordinates, move_direction_func, snake.id)
   end
-
 end

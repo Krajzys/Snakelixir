@@ -11,13 +11,13 @@ defmodule Model.Board do
     __struct__()
   end
 
-  def new_params(width, height, snakes, apples, points_taken) do
+  def new_params(width \\ 10, height \\ 10, snakes \\ [], apples \\ [], points_taken \\ []) do
     %{
       width: width,
       height: height,
-      snakes: [],
-      apples: [],
-      points_taken: []
+      snakes: snakes,
+      apples: apples,
+      points_taken: points_taken
     }
   end
   # APPLE SPAWNING
