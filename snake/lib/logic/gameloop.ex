@@ -10,12 +10,12 @@ defmodule Logic.GameLoop do
   @fireball_speed 2
 
 
-  """
+  # """
 
-  init_game(params)
-  |> game loop
+  # init_game(params)
+  # |> game loop
 
-  """
+  # """
 
   def init_game(board_wdith \\ 20, board_height \\ 20, player_1_name \\ "p1", player_2_name \\ "p2") do
     board_width = board_wdith
@@ -56,7 +56,6 @@ defmodule Logic.GameLoop do
   end
 
 
-
   """
   Czy ten wzorzec jakos sie da uzyc?
   double lastTime = getCurrentTime();
@@ -81,10 +80,10 @@ defmodule Logic.GameLoop do
 
 
     # TODO: PROCESS CONFIGURATION INPUT
-    # TODO: TUTAJ DODAC OBSLUGE INPUTU ZEBY KIERUNEK WERZA NIE ZMINEIAL SIE CO CHWILE
+    # TODO: TUTAJ DODAC OBSLUGE INPUTU ZEBY KIERUNEK WEZA NIE ZMINEIAL SIE CO CHWILE
 
 
-    updated_snake_map = snake_map
+    # updated_snake_map = snake_map
 
     # MOVE SNAKES
     Enum.each(snake_map, fn({snake_name, snake_data}) ->
@@ -94,7 +93,7 @@ defmodule Logic.GameLoop do
       snake_new_dir = Snake.change_direction(current_snake, new_direction)
       moved_snake = Snake.move_direction(snake_new_dir)
 
-      updated_snake_map = Map.put(updated_snake_map, snake_name, %{updated_snake_map[snake_name]| "snake": moved_snake}) # tutaj snake_moved? bylo moved
+      updated_snake_map = Map.put(updated_snake_map, snake_name, %{updated_snake_map[snake_name]| snake: moved_snake}) # tutaj snake_moved? bylo moved
     end)
 
     snake_map = updated_snake_map
@@ -107,7 +106,7 @@ defmodule Logic.GameLoop do
       coordinates: coordinates,
       direction: direction_function,
       snake_id: id
-      """
+    """
     # STANY KTO GDZIE WPADL?
     # CHECK SNAKE COLLISIONS
     snakes_statuses = Enum.map(snake_map, fn({snake_name, snake_data}) ->
@@ -126,17 +125,18 @@ defmodule Logic.GameLoop do
             :game_stop
           :snake_alive ->
             # TODO: CZY ZADZIALA ZMIENNA snake_name ??
-            updated_snake_map = Map.put(updated_snake_map, snake_name, %{updated_snake_map[snake_name]| "snake": moved_snake})
+            updated_snake_map = Map.put(updated_snake_map, snake_name, %{updated_snake_map[snake_name]| snake: moved_snake})
             :game_ok
           :snake_eat ->
-            updated_snake_map = Map.put(updated_snake_map, snake_name, %{updated_snake_map[snake_name]| "snake": moved_snake})
+            updated_snake_map = Map.put(updated_snake_map, snake_name, %{updated_snake_map[snake_name]| snake: moved_snake})
             :game_food  # TODO: SYGNAL ZE JEDZENIE ZJEDZONE I MA ZNIKNAC
         end
     end)
 
     # CHECK FIREBALL COLLISIONS
     fireball_list = Enum.map(fireball_list, fn(fireball) ->
-                      fireball.check_fireball_collision(fireball, board_width, board_height, snake_points, apple_point, fireball_points) end)
+                      fireball.check_fireball_collision(fireball, board_width, board_height, snake_points, apple_point, Enum.map(List.delete(fireball_list, fireball), fn(fireball) -> fireball.coordinates end)) end)
+    # usuwanie fireball z listy
 
     case snakes_statuses do
 
@@ -155,43 +155,43 @@ defmodule Logic.GameLoop do
 
     # IF SNAKES ARE NOT DEAD THEN TRY TO SHOOT
 
-    """
-    {fire_status, object_colision_point, fireball, other_fireball_points_collision} =
-      case shooting_button_1 do
-        down ->
-          snake1.fire(snake_1, board_width, board_height, snake_2.points, food.coordinates, Enum.map(snake_1_fireball_list, fn(fireball) -> fireball.coordinates end) )
-        up ->
-          _ -> nil
-      end
+    # """
+    # {fire_status, object_colision_point, fireball, other_fireball_points_collision} =
+    #   case shooting_button_1 do
+    #     down ->
+    #       snake1.fire(snake_1, board_width, board_height, snake_2.points, food.coordinates, Enum.map(snake_1_fireball_list, fn(fireball) -> fireball.coordinates end) )
+    #     up ->
+    #       _ -> nil
+    #   end
 
-    case fire_status do
-      :ok ->
+    # case fire_status do
+    #   :ok ->
 
-      :snake_hit ->
+    #   :snake_hit ->
 
-      :no_ok ->
+    #   :no_ok ->
 
-      :apple_destroyed ->
-
-
-    end
-
-      snake_1_fireball_list = snake_1_fireball_list ++ snake_1_fireball
+    #   :apple_destroyed ->
 
 
-    {:apple_destroyed, apple_point, fireball, fireball_points_expired}
+    # end
 
-                {:ok, nil, fireball, fireball_points_expired}
-
-            {:snake_hit, hd(hit_point_status), fireball, fireball_points_expired}
-
-        {:no_ok, fireball}
-
-    Enum.map(snake_1_fireball_list, fn(snake_1_fireball) -> snake_1_fireball.check_fireball_collision(snake_1_fireball, board_width, board_height, snake_1.points ++ snake_2.points, apple_point) end)
+    #   snake_1_fireball_list = snake_1_fireball_list ++ snake_1_fireball
 
 
+    # {:apple_destroyed, apple_point, fireball, fireball_points_expired}
 
-    """
+    #             {:ok, nil, fireball, fireball_points_expired}
+
+    #         {:snake_hit, hd(hit_point_status), fireball, fireball_points_expired}
+
+    #     {:no_ok, fireball}
+
+    # Enum.map(snake_1_fireball_list, fn(snake_1_fireball) -> snake_1_fireball.check_fireball_collision(snake_1_fireball, board_width, board_height, snake_1.points ++ snake_2.points, apple_point) end)
+
+
+
+    # """
 
 
 

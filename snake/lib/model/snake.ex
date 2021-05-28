@@ -131,12 +131,14 @@ defmodule Model.Snake do
 
   def move(snake) do
     head = hd(snake.points)
-    cond snake.food ->
+    snake_food = snake.food
+    case snake_food do
       True ->
         %{snake| food: False}
       False ->
         removed_tail = snake.points |> Enum.reverse() |> tl() |> Enum.reverse()
         %{snake| points: [head | removed_tail]}
+    end
   end
 
   def move_down(snake) do
@@ -177,10 +179,10 @@ defmodule Model.Snake do
 
     # MARK IF SHOULD EAT, INC SCORE
     moved_snake =
-      cond apple_point.coordinates do
+      case apple_point.coordinates do
         {hx, hy} ->
           new_score =
-            cond moved_snake.score do
+            case moved_snake.score do
               0 ->
                 100
               1 -> 200
@@ -192,9 +194,9 @@ defmodule Model.Snake do
       end
 
     # WALL COLLISION
-    wall_collision_check = hx > 0 && hx < board_width && hy > 0 && hy < board_height
-
-    case wall_collision_check do
+    hx > 0 && hx < board_width && hy > 0 && hy < board_height
+    |>
+    case do
         false ->
           {:snake_dead, moved_snake}
         true ->
@@ -204,7 +206,7 @@ defmodule Model.Snake do
             true ->
               {:snake_dead, moved_snake}
             false ->
-              case moved_snake.food -> do
+              case moved_snake.food do
                 True ->
                   {:snake_eat, moved_snake}
                 False ->
