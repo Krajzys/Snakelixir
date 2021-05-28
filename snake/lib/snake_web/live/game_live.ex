@@ -89,7 +89,7 @@ defmodule SnakeWeb.GameLive do
     assigns = socket.assigns
     board = assigns.board
     [snake_a, snake_b] = board.snakes
-    snake_a = Snake.change_direction(snake_a, "right")
+    snake_a = Snake.change_direction(snake_a, :right)
     new_snakes = [snake_a, snake_b]
     board = %{board | snakes: new_snakes}
     {:noreply, socket |> assign(:board, board)}
@@ -99,7 +99,7 @@ defmodule SnakeWeb.GameLive do
     assigns = socket.assigns
     board = assigns.board
     [snake_a, snake_b] = board.snakes
-    snake_a = Snake.change_direction(snake_a, "up")
+    snake_a = Snake.change_direction(snake_a, :up)
     new_snakes = [snake_a, snake_b]
     board = %{board | snakes: new_snakes}
     {:noreply, socket |> assign(:board, board)}
@@ -109,7 +109,7 @@ defmodule SnakeWeb.GameLive do
     assigns = socket.assigns
     board = assigns.board
     [snake_a, snake_b] = board.snakes
-    snake_a = Snake.change_direction(snake_a, "left")
+    snake_a = Snake.change_direction(snake_a, :left)
     new_snakes = [snake_a, snake_b]
     board = %{board | snakes: new_snakes}
     {:noreply, socket |> assign(:board, board)}
@@ -119,7 +119,7 @@ defmodule SnakeWeb.GameLive do
     assigns = socket.assigns
     board = assigns.board
     [snake_a, snake_b] = board.snakes
-    snake_a = Snake.change_direction(snake_a, "down")
+    snake_a = Snake.change_direction(snake_a, :down)
     new_snakes = [snake_a, snake_b]
     board = %{board | snakes: new_snakes}
     {:noreply, socket |> assign(:board, board)}
@@ -130,7 +130,7 @@ defmodule SnakeWeb.GameLive do
     assigns = socket.assigns
     board = assigns.board
     [snake_a, snake_b] = board.snakes
-    snake_b = Snake.change_direction(snake_b, "right")
+    snake_b = Snake.change_direction(snake_b, :right)
     new_snakes = [snake_a, snake_b]
     board = %{board | snakes: new_snakes}
     {:noreply, socket |> assign(:board, board)}
@@ -140,7 +140,7 @@ defmodule SnakeWeb.GameLive do
     assigns = socket.assigns
     board = assigns.board
     [snake_a, snake_b] = board.snakes
-    snake_b = Snake.change_direction(snake_b, "up")
+    snake_b = Snake.change_direction(snake_b, :up)
     new_snakes = [snake_a, snake_b]
     board = %{board | snakes: new_snakes}
     {:noreply, socket |> assign(:board, board)}
@@ -150,7 +150,7 @@ defmodule SnakeWeb.GameLive do
     assigns = socket.assigns
     board = assigns.board
     [snake_a, snake_b] = board.snakes
-    snake_b = Snake.change_direction(snake_b, "left")
+    snake_b = Snake.change_direction(snake_b, :left)
     new_snakes = [snake_a, snake_b]
     board = %{board | snakes: new_snakes}
     {:noreply, socket |> assign(:board, board)}
@@ -160,7 +160,7 @@ defmodule SnakeWeb.GameLive do
     assigns = socket.assigns
     board = assigns.board
     [snake_a, snake_b] = board.snakes
-    snake_b = Snake.change_direction(snake_b, "down")
+    snake_b = Snake.change_direction(snake_b, :down)
     new_snakes = [snake_a, snake_b]
     board = %{board | snakes: new_snakes}
     {:noreply, socket |> assign(:board, board)}
