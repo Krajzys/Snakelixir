@@ -98,7 +98,7 @@ defmodule Model.Snake do
   def change_direction(snake, new_direction) do
     old_direction = snake.direction
     case new_direction do
-      old_direction ->
+      ^old_direction ->
         snake
       "left" when old_direction == "right" ->
         snake

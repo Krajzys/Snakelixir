@@ -4,8 +4,8 @@ defmodule Model.Point do
     coordinates: {0, 0}
   ]
 
-  def new() do
-    __struct__()
+  def new(options \\ []) do
+    __struct__(options)
   end
 
   def new_random(_board_width, _board_height, _points_taken) do
@@ -43,12 +43,12 @@ defmodule Model.Point do
 
   def move_down(point) do
     {x, y} = point.coordinates
-    %{point| coordinates: {x, y-1}}
+    %{point| coordinates: {x, y+1}}
   end
 
   def move_up(point) do
     {x, y} = point.coordinates
-    %{point| coordinates: {x, y+1}}
+    %{point| coordinates: {x, y-1}}
   end
 
   def move_left(point) do
@@ -56,7 +56,7 @@ defmodule Model.Point do
     %{point| coordinates: {x-1, y}}
   end
 
-  def move_left(point) do
+  def move_right(point) do
     {x, y} = point.coordinates
     %{point| coordinates: {x+1, y}}
   end
