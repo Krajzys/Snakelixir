@@ -85,19 +85,20 @@ defmodule Logic.GameLoop do
       game_status =
         case snake_status do
           :snake_dead ->
-            IO.puts(snake.name <> " is dead!")
+            Logger.info("Snake #{snake.name} is dead!")
             # TODO: CO DALEJ?
             {:game_stop, snake}
           :snake_alive ->
-            IO.puts(snake.name <> " wololo")
             # TODO: CZY ZADZIALA ZMIENNA snake_name ??
             # updated_snake_map = Map.put(updated_snake_map, snake_name, %{updated_snake_map[snake_name]| snake: moved_snake})
             {:game_ok, snake}
           :snake_eat ->
-            IO.puts(snake.name <> " ate apple")
+            Logger.info("Snake #{snake.name} ate apple")
             {:game_food, snake}  # TODO: SYGNAL ZE JEDZENIE ZJEDZONE I MA ZNIKNAC
         end
     end)
+
+    # Logger.debug("Snakes statuses: #{inspect snakes_statuses}")
 
     alive_snakes = Enum.filter(snakes_statuses, fn {status, _} -> status != :game_stop end)
     alive_snakes = Enum.map(alive_snakes, fn {status, snake} ->
@@ -111,8 +112,14 @@ defmodule Logic.GameLoop do
       end
     end)
 
-    IO.puts(inspect alive_snakes)
-    alive_snakes
+    remaining_apples = case Enum.filter(snakes_statuses, fn {status, _} -> status == :game_food end) do
+      [] ->
+        [food]
+      _ ->
+        [Point.new_apple(board.width, board.height, board.points_taken)]
+    end
+
+    [alive_snakes, remaining_apples]
 
     # CHECK FIREBALL COLLISIONS
     # apple_point = Point.new()

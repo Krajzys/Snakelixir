@@ -1,5 +1,5 @@
 defmodule Model.Snake do
-
+  require Logger
   alias Model.Point, as: Point
 
   defstruct [
@@ -21,8 +21,8 @@ defmodule Model.Snake do
   end
 
 
-  def new_random(_board_width, _board_height, _taken_points, player_name, id) do
-    starting_point = Point.new_random(_board_width, _board_height, _taken_points)
+  def new_random(board_width, board_height, taken_points, player_name, id) do
+    starting_point = Point.new_random(board_width, board_height, taken_points)
     second_point = Point.move_down(starting_point)
     %Model.Snake{ # TODO: CHECKOUT HM? czy module dziala
       id: id,
@@ -132,10 +132,12 @@ defmodule Model.Snake do
 
   def move(snake) do
     head = hd(snake.points)
+    tail = tl(snake.points)
     snake_food = snake.food
     case snake_food do
       true ->
-        %{snake| food: false}
+        up_snake = %{snake| food: false}
+        %{up_snake| points: List.insert_at(up_snake.points, 0, hd(up_snake.points))}
       false ->
         removed_tail = case tl(snake.points) do
           [] ->
@@ -225,8 +227,7 @@ defmodule Model.Snake do
   # TODO: IDEA -> would be cool to implement because PvP
   # Timebar based dash that regenerates once every N seconds and makes the snake traverse a couple blocks in one quantum of time.
   def dash(snake) do
-
-
+    snake
   end
 
   # TODO: IDEA -> same as dash
@@ -239,7 +240,7 @@ defmodule Model.Snake do
 
   # Invoked after moving and collision checks?
   # HAS TO MOVE FASTER THAN THE SNAKE XD
-  def fire(snake, board_width, board_height, other_snake_points, apple_point) do
+  def fire(snake, _board_width, _board_height, _other_snake_points, _apple_point) do
 
     # FIRE DESTROYS APPLES
 
