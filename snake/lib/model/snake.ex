@@ -9,9 +9,9 @@ defmodule Model.Snake do
     points: [],
     apples: 0,
     direction: :right, # TUTAJ LOSOWANIE, BAZUJĄCE NA POŁOŻENIU WZGLĘDEM KRAWĘDZI
-    food: False,
-    fire: False,
-    dash: False
+    food: false,
+    fire: false,
+    dash: false
   ]
 
   # TODO: REPLACE STRINGS FOR DIRECTIONS WITH ATOMS?
@@ -30,9 +30,9 @@ defmodule Model.Snake do
       points: [starting_point],
       apples: 0,
       direction: start_direction(_board_width, _board_height, starting_point),
-      food: False,
-      fire: False,
-      dash: False
+      food: false,
+      fire: false,
+      dash: false
     }
   end
 
@@ -133,9 +133,9 @@ defmodule Model.Snake do
     head = hd(snake.points)
     snake_food = snake.food
     case snake_food do
-      True ->
-        %{snake| food: False}
-      False ->
+      true ->
+        %{snake| food: false}
+      false ->
         removed_tail = snake.points |> Enum.reverse() |> tl() |> Enum.reverse()
         %{snake| points: [head | removed_tail]}
     end
@@ -190,7 +190,7 @@ defmodule Model.Snake do
               1 -> 200
               _ -> Integer.pow(moved_snake.score, moved_snake.apples)
             end
-          %{moved_snake| score: new_score, apples: moved_snake.apples + 1, food: True}
+          %{moved_snake| score: new_score, apples: moved_snake.apples + 1, food: true}
       end
 
     # WALL COLLISION
@@ -205,9 +205,9 @@ defmodule Model.Snake do
               {:snake_dead, moved_snake, eaten_apple}
             false ->
               case moved_snake.food do
-                True ->
+                true ->
                   {:snake_eat, moved_snake, eaten_apple}
-                False ->
+                false ->
                   {:snake_alive, moved_snake, eaten_apple}
               end
           end
