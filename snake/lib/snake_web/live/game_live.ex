@@ -10,7 +10,7 @@ defmodule SnakeWeb.GameLive do
   def mount(_params, _session, socket) do
     :timer.send_interval(100, :tick)
     {:ok,
-      assign(socket, %{board: Logic.GameLoop.init_game(20, 20, "snake-1", "snake-2"), fireballs: []})
+      assign(socket, %{board: Logic.GameLoop.init_game(20, 20, "snake-1", "snake-2"), fireballs: [Point.new_fireball({5,5}, nil, 1)]})
     }
   end
 
@@ -59,15 +59,18 @@ defmodule SnakeWeb.GameLive do
     <%= for snake <- assigns.board.snakes do %>
       <%= for {point, no} <- Enum.zip(snake.points, 0..(length(snake.points)-1)) do %>
         <% {x, y} = point.coordinates %>
-        <rect width="<%= field_size %>" height="<%= field_size %>"
-        x="<%= x * field_size %>" y="<%= y * field_size %>"
-        style="fill:
-        <%= if snake.name == "snake-1" do %>
-          rgb(<%= no*40 %>,200,120)
-        <% else %>
-          rgb(<%= no*40 %>,120,200)
-        <% end %>
-          " />
+        <% r_color_number = if rem(div(no*40, 200), 2) == 1, do: rem(no*40, 200), else: 200-rem(no*40, 200) %>
+        <% magic_number = if rem(div(no*2, 4), 2) == 1, do: rem(no*2, 4), else: 4-rem(no*2, 4) %>
+        <% magic_number = abs(magic_number - 4) %>
+          <rect width="<%= field_size - magic_number %>" height="<%= field_size - magic_number %>"
+          x="<%= x * field_size + magic_number/2 %>" y="<%= y * field_size + magic_number/2 %>"
+          style="fill:
+          <%= if snake.name == "snake-1" do %>
+            rgb(<%= r_color_number %>,200,120);stroke-width:<%= 2 + magic_number/2 %>;stroke:rgb(<%= r_color_number %>,120,80)
+          <% else %>
+            rgb(<%= r_color_number %>,120,200);stroke-width:<%= 2 + magic_number/2 %>;stroke:rgb(<%= r_color_number %>,80,120)
+          <% end %>
+            " />
       <% end %>
     <% end %>
     """
@@ -75,13 +78,21 @@ defmodule SnakeWeb.GameLive do
 
   defp render_apple(assigns) do
     field_size = @field_size
-
     ~L"""
     <%= for apple <- assigns.board.apples do %>
       <% {x, y} = apple.coordinates %>
-    <rect width="<%= field_size %>" height="<%= field_size %>"
-        x="<%= x * field_size %>" y="<%= y * field_size %>"
-        style="fill:Red"/>
+    <circle r="<%= field_size/2 %>"
+            cx="<%= x * field_size + field_size/2 %>" cy="<%= y * field_size + field_size/2 %>"
+            style="fill:Red;stroke-width:2;stroke:Maroon"/>
+    <circle r="<%= field_size/8 %>"
+            cx="<%= x * field_size + 4*field_size/6 %>" cy="<%= y * field_size + field_size/3 %>"
+            style="fill:White"/>
+    <ellipse cx="<%= x * field_size + 4*field_size/5 %>" cy="<%= y * field_size + field_size/8 %>"
+            rx="<%= field_size/4 %>" ry="<%= field_size/7 %>"
+            style="fill:green;stroke:DarkGreen;stroke-width:2" />
+    <ellipse cx="<%= x * field_size + field_size/3 %>" cy="<%= y * field_size + field_size/8 %>"
+            rx="<%= field_size/3 %>" ry="<%= field_size/7 %>"
+            style="fill:green;stroke:DarkGreen;stroke-width:2" />
     <% end %>
     """
   end
@@ -92,9 +103,15 @@ defmodule SnakeWeb.GameLive do
     ~L"""
     <%= for fireball <- assigns.fireballs do %>
       <% {x, y} = fireball.coordinates %>
-    <rect width="<%= field_size %>" height="<%= field_size %>"
-        x="<%= x * field_size %>" y="<%= y * field_size %>"
-        style="fill:Gold"/>
+    <circle r="<%= field_size/2 %>"
+        cx="<%= x * field_size + field_size/2 %>" cy="<%= y * field_size + field_size/2 %>"
+        style="fill:DodgerBlue;stroke-width:2;stroke:rgb(50, 93, 129)"/>
+    <circle r="<%= field_size/3 %>"
+        cx="<%= x * field_size + field_size/2 %>" cy="<%= y * field_size + field_size/2 %>"
+        style="fill:SteelBlue;stroke-width:2;stroke:SteelBlue"/>
+    <circle r="<%= field_size/5 %>"
+        cx="<%= x * field_size + field_size/2 %>" cy="<%= y * field_size + field_size/2 %>"
+        style="fill:White;stroke-width:2;stroke:SkyBlue"/>
     <% end %>
     """
   end
