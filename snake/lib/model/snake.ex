@@ -9,9 +9,9 @@ defmodule Model.Snake do
     points: [],
     apples: 0,
     direction: :right, # TUTAJ LOSOWANIE, BAZUJĄCE NA POŁOŻENIU WZGLĘDEM KRAWĘDZI
-    food: False,
-    fire: False,
-    dash: False
+    food: false,
+    fire: false,
+    dash: false
   ]
 
   # TODO: REPLACE STRINGS FOR DIRECTIONS WITH ATOMS?
@@ -23,16 +23,17 @@ defmodule Model.Snake do
 
   def new_random(_board_width, _board_height, _taken_points, player_name, id) do
     starting_point = Point.new_random(_board_width, _board_height, _taken_points)
-    %__MODULE__{ # TODO: CHECKOUT HM? czy module dziala
+    second_point = Point.move_down(starting_point)
+    %Model.Snake{ # TODO: CHECKOUT HM? czy module dziala
       id: id,
       name: player_name,
       score: 0,
-      points: [starting_point],
+      points: [starting_point, second_point],
       apples: 0,
-      direction: start_direction(_board_width, _board_height, starting_point),
-      food: False,
-      fire: False,
-      dash: False
+      direction: :right,
+      food: false,
+      fire: false,
+      dash: false
     }
   end
 
@@ -133,10 +134,15 @@ defmodule Model.Snake do
     head = hd(snake.points)
     snake_food = snake.food
     case snake_food do
-      True ->
-        %{snake| food: False}
-      False ->
-        removed_tail = snake.points |> Enum.reverse() |> tl() |> Enum.reverse()
+      true ->
+        %{snake| food: false}
+      false ->
+        removed_tail = case tl(snake.points) do
+          [] ->
+            snake.points |> Enum.reverse() |> tl() |> Enum.reverse()
+          _ ->
+            snake.points |> Enum.reverse() |> tl() |> Enum.reverse()
+        end
         %{snake| points: [head | removed_tail]}
     end
   end
@@ -174,27 +180,27 @@ defmodule Model.Snake do
   # NIE JEST WYWOŁANA BEZPOŚREDNIO Z MOVE)DIRECTION BO NIE MA ONA WIEDZY O STANIE 2 SNAKE'a
   def check_collision(moved_snake, board_width, board_height, other_snake_points, apple_point) do
 
-    [head | tail] = moved_snake
+    [head | _] = moved_snake.points
     {hx, hy} = head.coordinates
 
     # MARK IF SHOULD EAT, INC SCORE
     moved_snake =
       case apple_point.coordinates do
-        {hx, hy} ->
+        {^hx, ^hy} ->
           new_score =
             case moved_snake.score do
               0 ->
                 100
               1 -> 200
-              _ -> Integer.pow(moved_snake.score, moved_snake.apples)
+              _ -> 10
             end
-          %{moved_snake| score: new_score, apples: moved_snake.apples + 1, food: True}
+          %{moved_snake| score: new_score, apples: moved_snake.apples + 1, food: true}
         _ ->
           moved_snake
       end
 
     # WALL COLLISION
-    hx > 0 && hx < board_width && hy > 0 && hy < board_height
+    ((hx >= 0) && (hx < board_width) && (hy >= 0) && (hy < board_height))
     |>
     case do
         false ->
@@ -207,9 +213,9 @@ defmodule Model.Snake do
               {:snake_dead, moved_snake}
             false ->
               case moved_snake.food do
-                True ->
+                true ->
                   {:snake_eat, moved_snake}
-                False ->
+                false ->
                   {:snake_alive, moved_snake}
               end
           end

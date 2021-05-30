@@ -1,5 +1,6 @@
 defmodule Logic.GameLoop do
 
+  require Logger
   alias Model.Board, as: Board
   alias Model.Point, as: Point
   alias Model.Snake, as: Snake
@@ -17,17 +18,11 @@ defmodule Logic.GameLoop do
 
   # """
 
-  def init_game(board_wdith \\ 20, board_height \\ 20, player_1_name \\ "p1", player_2_name \\ "p2") do
-    board_width = board_wdith
-    board_height = board_height
-
-    player_1_name = player_1_name
+  def init_game(board_width \\ 20, board_height \\ 20, player_1_name \\ "p1", player_2_name \\ "p2") do
     player_1_id = 1
 
-    player_2_name = player_2_name
     player_2_id = 2
 
-    board = Board.new() # FIXME:
     occupied_coordinates = []
 
     # TODO: TWORZENIE SNAKOW W JAKIMS ITERATORZE JAKIS FOR COS?
@@ -41,18 +36,7 @@ defmodule Logic.GameLoop do
     food = Point.new_apple(board_width, board_height, occupied_coordinates)
     occupied_coordinates = occupied_coordinates ++ [food.coordinates]
 
-    # CO Z UZYWANIEM => W MAPACH? LINTERN DAJE OSTRZEZENIA
-    %{
-      snake_map: %{snake_1: %{
-                                  snake: snake_1,
-                                  new_direction: nil},
-                  snake_2: %{
-                                  snake: snake_2,
-                                  new_direction: nil}},
-      board: board,
-      food: food,
-      occupied_coordinates: occupied_coordinates
-    }
+    Board.new(width: board_width, height: board_height, snakes: [snake_1, snake_2], apples: [food], points_taken: occupied_coordinates)
   end
 
 
@@ -70,69 +54,65 @@ defmodule Logic.GameLoop do
   }
   """
 
-  def game_loop(%{
-    snake_map: %{snake_1: %{snake: snake_1, new_direction: nil}, snake_2: %{snake: snake_2, new_direction: nil}},
-    board: board,
-    food: food,
-    occupied_coordinates: occupied_coordinates}=socket) do
-
+  def game_loop(socket) do
+    snakes_list = socket.assigns.board.snakes
+    board = socket.assigns.board
+    [food] = socket.assigns.board.apples
     # TODO: TIMOUT WAIT UNTIL THE PLAYERS BOTH CONFIRM THEY'RE READY
-
-
     # TODO: PROCESS CONFIGURATION INPUT
     # TODO: TUTAJ DODAC OBSLUGE INPUTU ZEBY KIERUNEK WEZA NIE ZMINEIAL SIE CO CHWILE
 
-
-    updated_snake_map = socket.snake_map
-
     # MOVE SNAKES
-    Enum.each(socket.snake_map, fn({snake_name, snake_data}) ->
-      current_snake = snake_data["snake"]
-      new_direction = snake_data["new_direction"]
-
-      snake_new_dir = Snake.change_direction(current_snake, new_direction)
-      moved_snake = Snake.move_direction(snake_new_dir)
-
-      updated_snake_map = Map.put(updated_snake_map, snake_name, %{updated_snake_map[snake_name]| snake: moved_snake}) # tutaj snake_moved? bylo moved
-    end)
-
-    snake_map = updated_snake_map
+    moved_snakes = Enum.map(snakes_list, fn snake -> snake |> Snake.move_direction end)
 
     # MOVE FIREBALLS
     fireball_list = []
     fireball_list = Enum.map(fireball_list, fn(fireball) -> fireball.direction.(fireball) end)
 
-    """
-    color: :yellow,
-      coordinates: coordinates,
-      direction: direction_function,
-      snake_id: id
-    """
-    # STANY KTO GDZIE WPADL?
-    # CHECK SNAKE COLLISIONS
-    snakes_statuses = Enum.map(snake_map, fn({snake_name, snake_data}) ->
-      other_snake = List.delete(Map.keys(snake_map), snake_name) # ZROBIONE DLA 2 snakow;
+    moved_snakes_after_check = []
+    snakes_statuses = Enum.map(moved_snakes, fn snake ->
+      other_snake = Snake.new()
+      case Enum.filter(moved_snakes, fn snake_1 -> snake_1 != snake end) do
+        [some_snake] ->
+          other_snake = some_snake
+        _ ->
+          other_snake
+      end
 
-      moved_snake = snake_data["snake"]
+      other_snake_points = other_snake.points
 
-      other_snake_points = updated_snake_map[other_snake]["snake"].points
-
-      {snake_status, snake} = Snake.check_collision(moved_snake, board.width, board.height, other_snake_points, food.coordinates)
+      {snake_status, snake} = Snake.check_collision(snake, board.width, board.height, other_snake_points, food)
       game_status =
         case snake_status do
           :snake_dead ->
-            IO.puts(snake_name + " is dead!")
+            IO.puts(snake.name <> " is dead!")
             # TODO: CO DALEJ?
-            :game_stop
+            {:game_stop, snake}
           :snake_alive ->
+            IO.puts(snake.name <> " wololo")
             # TODO: CZY ZADZIALA ZMIENNA snake_name ??
-            updated_snake_map = Map.put(updated_snake_map, snake_name, %{updated_snake_map[snake_name]| snake: moved_snake})
-            :game_ok
+            # updated_snake_map = Map.put(updated_snake_map, snake_name, %{updated_snake_map[snake_name]| snake: moved_snake})
+            {:game_ok, snake}
           :snake_eat ->
-            updated_snake_map = Map.put(updated_snake_map, snake_name, %{updated_snake_map[snake_name]| snake: moved_snake})
-            :game_food  # TODO: SYGNAL ZE JEDZENIE ZJEDZONE I MA ZNIKNAC
+            IO.puts(snake.name <> " ate apple")
+            {:game_food, snake}  # TODO: SYGNAL ZE JEDZENIE ZJEDZONE I MA ZNIKNAC
         end
     end)
+
+    alive_snakes = Enum.filter(snakes_statuses, fn {status, _} -> status != :game_stop end)
+    alive_snakes = Enum.map(alive_snakes, fn {status, snake} ->
+      case status do
+        :game_food ->
+          %Model.Snake{snake | food: true}
+        :game_ok ->
+          %Model.Snake{snake | food: false}
+        _ ->
+          %Model.Snake{snake | food: false}
+      end
+    end)
+
+    IO.puts(inspect alive_snakes)
+    alive_snakes
 
     # CHECK FIREBALL COLLISIONS
     # apple_point = Point.new()
@@ -140,20 +120,20 @@ defmodule Logic.GameLoop do
     #                   fireball.check_fireball_collision(fireball, board.width, board.height, snake.points, apple_point, Enum.map(List.delete(fireball_list, fireball), fn(fireball) -> fireball.coordinates end)) end)
     # usuwanie fireball z listy
 
-    case snakes_statuses do
+    # case snakes_statuses do
 
-      :game_stop ->
-        # todo:
-        0
-      :game_food ->
-        # give food new location
-        0
-      :game_ok ->
-        # stuff
-        0
-      _ ->
-        0
-    end
+    #   :game_stop ->
+    #     # todo:
+    #     0
+    #   :game_food ->
+    #     # give food new location
+    #     0
+    #   :game_ok ->
+    #     # stuff
+    #     0
+    #   _ ->
+    #     0
+    # end
 
     # IF SNAKES ARE NOT DEAD THEN TRY TO SHOOT
 

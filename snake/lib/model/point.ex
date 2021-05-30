@@ -79,7 +79,7 @@ defmodule Model.Point do
     border_check = fx > 0 && fx < board_width && fy > 0 && fy < board_height
 
     case border_check do
-      True ->
+      true ->
         snake_hit_point = Enum.filter(snake_points, fn(snake_point) -> snake_point == fireball_coordinates end)
         hit_point_status = length(snake_hit_point)
         fireball_hit_point = Enum.filter(fireball_points, fn(fireball_point) -> fireball_point == fireball_coordinates end)
@@ -104,7 +104,7 @@ defmodule Model.Point do
           _ ->
             IO.puts("Snake hit point Error!")
         end
-      False ->
+      false ->
         {:no_ok, nil, fireball, nil}
     end
 
