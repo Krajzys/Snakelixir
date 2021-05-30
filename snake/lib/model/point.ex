@@ -8,26 +8,28 @@ defmodule Model.Point do
     __struct__(options)
   end
 
-  def new_random(_board_width, _board_height, _points_taken) do
+  def new_random(board_width, board_height, points_taken) do
     %__MODULE__{ # HM? czy module dziala
       color: random_color(),
-      coordinates: random_coordinates(_board_width, _board_height, _points_taken)
+      coordinates: random_coordinates(board_width, board_height, points_taken)
     }
   end
 
-  def new_apple(_board_width, _board_height, _points_taken) do
+  def new_apple(id, board_width, board_height, points_taken) do
     %{
-    color: :red, # ADD SPECIFIC COLOR
-    coordinates: random_coordinates(_board_width, _board_height, _points_taken)
+      id: id,
+      color: :red, # ADD SPECIFIC COLOR
+      coordinates: random_coordinates(board_width, board_height, points_taken)
     }
   end
 
-  def new_fireball(coordinates, direction_function, id) do
+  def new_fireball(id \\ 0, coordinates, direction_function, snake_id) do
     %{
+      id: id,
       color: :yellow,
       coordinates: coordinates,
       direction: direction_function,
-      snake_id: id
+      snake_id: snake_id
     }
   end
 
@@ -70,42 +72,48 @@ defmodule Model.Point do
     %{point| coordinates: {x+1, y}}
   end
 
-  def check_fireball_collision(fireball, board_width, board_height, snake_points, apple_point, fireball_points) do
+  def check_fireball_collision(fireball, board_width, board_height, snakes, apples, other_fireballs) do
     fireball_coordinates = fireball.coordinates
     {fx, fy} = fireball_coordinates
 
-    # CO JAK FIREBALLE MAJA KOLIZE!!!??? TO TEZ WYBUCHAJA
-
-    border_check = fx > 0 && fx < board_width && fy > 0 && fy < board_height
-
-    case border_check do
+    # OUT OF BOUNDS CHECK
+    case fx > 0 && fx < board_width && fy > 0 && fy < board_height do
       True ->
-        snake_hit_point = Enum.filter(snake_points, fn(snake_point) -> snake_point == fireball_coordinates end)
-        hit_point_status = length(snake_hit_point)
-        fireball_hit_point = Enum.filter(fireball_points, fn(fireball_point) -> fireball_point == fireball_coordinates end)
-        # fireball_point_status = length(fireball_hit_point)
-        # fireball_points_expired =
-        #   case fireball_point_status do
-        #     0 ->
-        #       fireball_hit_point
-        #     _ -> [fireball_coordinates | fireball_hit_point] # LIST OF ALL POINTS TO REMOVE
-        #   end
+        # FOR EACH SNAKE TRY TO FIND A COLLISION POINT
+        snake_collided = Enum.find_value(snakes, {nil, nil}, fn(snake) ->
+          collision_point = Enum.find(snake.points, nil, fn(snake_point) -> snake_point.coordinates == fireball_coordinates end)
+          if collision_point != nil, do: {snake, %{collision_point| color: :snake_hit}} # TODO: COLOR
+        end)
 
-        case hit_point_status do
-          0 ->
-            case fireball_coordinates do
-              apple_point ->
-                {:apple_destroyed, apple_point, fireball, fireball_hit_point}
-              _ ->
-                {:ok, nil, fireball, fireball_hit_point}
-            end
-          1 ->
-            {:snake_hit, hd(hit_point_status), fireball, fireball_hit_point}
-          _ ->
-            IO.puts("Snake hit point Error!")
-        end
+        # FIND OTHER FIREBALLS THAT COLLIDE WITH OURS
+        other_fireballs_collided = Enum.find_value(other_fireballs, fn(other_fireball) -> if other_fireball.coordinates == fireball_coordinates, do: True end)
+
+        apple_collided = Enum.find_value(apples, nil, fn(apple) ->
+          if apple.coordinates == fireball_coordinates, do: %{apple| color: :apple_hit} # TODO: handle this
+        end)
+
+        {fireball, status} =
+          cond do
+            snake_collided != {nil, nil} ->
+              {%{fireball| color: :snake_hit}, :fireball_snake_end}
+            apple_collided != nil ->
+              {%{fireball| color: :apple_hit}, :fireball_apple_end}
+            other_fireballs_collided != [] ->
+              {%{fireball| color: :fireball_hit}, :fireball_end}
+            true ->
+              {fireball, :fireball_ok}
+          end
+        {
+          %{
+          fireball: fireball,
+          snake_collided: snake_collided,
+          other_fireballs_collided: other_fireballs_collided,  # TODO: CZY TO WGL PRZEKAZYWAC WARTO?
+          apple_collided: apple_collided
+          },
+          status
+        }
       False ->
-        {:no_ok, nil, fireball, nil}
+        {%{fireball: fireball}, :fireball_bounds_end}
     end
 
 

@@ -89,7 +89,7 @@ defmodule Model.Snake do
     random_direction(available_directions)
   end
 
-  def random_direction(possible_directions) do
+  defp random_direction(possible_directions) do
     possible_directions
     |> Enum.shuffle()
     |> List.first
@@ -129,7 +129,7 @@ defmodule Model.Snake do
     end
   end
 
-  def move(snake) do
+  defp move(snake) do
     head = hd(snake.points)
     snake_food = snake.food
     case snake_food do
@@ -169,18 +169,20 @@ defmodule Model.Snake do
     %{snake| points: [Point.move_right(head) | tail]}
   end
 
-  # TODO: LISTA SNAKOW CZY RACZEJ DWA ARGUMETY
-  # TODO: MUSI BYC WYKONAA FUNKCJA PO move_direction
   # NIE JEST WYWOŁANA BEZPOŚREDNIO Z MOVE)DIRECTION BO NIE MA ONA WIEDZY O STANIE 2 SNAKE'a
-  def check_collision(moved_snake, board_width, board_height, other_snake_points, apple_point) do
+  def check_collision(moved_snake, board_width, board_height, other_snake_points, apples) do
 
     [head | tail] = moved_snake
     {hx, hy} = head.coordinates
 
     # MARK IF SHOULD EAT, INC SCORE
+    eaten_apple = Enum.find(apples, nil, fn(apple) -> apple.coordinates == head.coordinates end)
+
     moved_snake =
-      case apple_point.coordinates do
-        {hx, hy} ->
+      case eaten_apple do
+        nil ->
+          moved_snake
+        _ ->
           new_score =
             case moved_snake.score do
               0 ->
@@ -189,30 +191,36 @@ defmodule Model.Snake do
               _ -> Integer.pow(moved_snake.score, moved_snake.apples)
             end
           %{moved_snake| score: new_score, apples: moved_snake.apples + 1, food: True}
-        _ ->
-          moved_snake
       end
 
     # WALL COLLISION
-    hx > 0 && hx < board_width && hy > 0 && hy < board_height
-    |>
-    case do
+    case hx > 0 && hx < board_width && hy > 0 && hy < board_height do
         false ->
-          {:snake_dead, moved_snake}
+          {:snake_dead, moved_snake, eaten_apple}
         true ->
           # SNAKE COLLISION
           snake_collision_check = Enum.any?(other_snake_points, fn(other_snake_point) -> head == other_snake_point end)
           case snake_collision_check do
             true ->
-              {:snake_dead, moved_snake}
+              {:snake_dead, moved_snake, eaten_apple}
             false ->
               case moved_snake.food do
                 True ->
-                  {:snake_eat, moved_snake}
+                  {:snake_eat, moved_snake, eaten_apple}
                 False ->
-                  {:snake_alive, moved_snake}
+                  {:snake_alive, moved_snake, eaten_apple}
               end
           end
+    end
+  end
+
+  def remove_blockdown(snake, hit_postition) do
+    index_to_slice = Enum.find_index(Enum.map(snake.points, fn(position) -> position.coordinates end), hit_position) -1
+    case index_to_slice do
+      nil ->
+        snake
+      _ ->
+        %{snake| points: Enum.slice(snake.points, 0..index_to_slice)} # FIXME CZY TO ZADZIALA ZEBY PRZEKAZAC INDEX ? # CZY SLICE DZIALA
     end
   end
 
@@ -235,8 +243,7 @@ defmodule Model.Snake do
   # HAS TO MOVE FASTER THAN THE SNAKE XD
   def fire(snake, board_width, board_height, other_snake_points, apple_point) do
 
-    # FIRE DESTROYS APPLES
-
+    # FIRE DESTROYS APPLES AND SNAKES FROM HIT-BLOCK TO TAIL
     snake_head = hd(snake.points)
 
     {fireball, move_direction_func} =
@@ -251,6 +258,6 @@ defmodule Model.Snake do
           {Point.move_down(snake_head), &Point.move_down/1}
       end
 
-    Point.new_fireball(fireball.coordinates, move_direction_func, snake.id)
+    Point.new_fireball(fireball.coordinates, move_direction_func, snake.id)  # TODO: CZY PRZEKAZYWANIE FUNKCJI TAK ZADZIALA??
   end
 end
