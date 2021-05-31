@@ -168,7 +168,7 @@ defmodule Model.Snake do
   # NIE JEST WYWOŁANA BEZPOŚREDNIO Z MOVE_DIRECTION BO NIE MA ONA WIEDZY O STANIE 2 SNAKE'a
   def check_collision(moved_snake, board_width, board_height, other_snake_points, apples) do
 
-    [head| _tail] = moved_snake.points
+    [head| tail] = moved_snake.points
     {hx, hy} = head.coordinates
 
     # MARK IF SHOULD EAT, INC SCORE
@@ -196,9 +196,12 @@ defmodule Model.Snake do
           {:snake_dead, moved_snake, eaten_apple}
         true ->
           # SNAKE COLLISION
-          snake_collision_check = Enum.any?(other_snake_points, fn(other_snake_point) -> head.coordinates == other_snake_point end)
+          self_collision_check = Enum.any?(tail, fn(tail_point) -> head.coordinates == tail_point.coordinates end)
+          other_snake_collision_check = Enum.any?(other_snake_points, fn(other_snake_point) -> head.coordinates == other_snake_point end)
 
-          case snake_collision_check do
+          final_collision_check = self_collision_check or other_snake_collision_check
+
+          case final_collision_check do
             true ->
               {:snake_dead, moved_snake, eaten_apple}
             false ->
