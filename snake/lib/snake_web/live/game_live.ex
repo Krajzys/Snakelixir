@@ -49,7 +49,20 @@ defmodule SnakeWeb.GameLive do
   defp render_board(assigns) do
     field_size = @field_size
     ~L"""
-    <rect width="<%= assigns.game_state.board.width * field_size %>" height="<%= assigns.game_state.board.height * field_size %>" style="fill:rgb(25,25,25);stroke-width:3;stroke:rgb(255,255,255)" />
+    <defs>
+      <linearGradient id="Gradient2" x1="2" x2="0" y1="" y2="1">
+        <stop offset="0%" stop-color="#241300"/>
+        <stop offset="50%" stop-color="#625522"/>
+        <stop offset="100%" stop-color="#241300"/>
+      </linearGradient>
+      <linearGradient id="Gradient3" x1="0" x2="1" y1="1" y2="">
+        <stop offset="0%" stop-color="#241300" stop-opacity="20%"/>
+        <stop offset="50%" stop-color="#625522" stop-opacity="20%"/>
+        <stop offset="100%" stop-color="#241300" stop-opacity="20%"/>
+      </linearGradient>
+    </defs>
+    <rect width="<%= assigns.game_state.board.width * field_size %>" height="<%= assigns.game_state.board.height * field_size %>" fill="url(#Gradient2)"/>
+    <rect width="<%= assigns.game_state.board.width * field_size %>" height="<%= assigns.game_state.board.height * field_size %>" fill="green" opacity="20%"/>
     """
   end
 
