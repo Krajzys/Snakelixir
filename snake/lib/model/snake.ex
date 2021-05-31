@@ -10,7 +10,7 @@ defmodule Model.Snake do
     apples: 0,
     direction: :right, # TUTAJ LOSOWANIE, BAZUJĄCE NA POŁOŻENIU WZGLĘDEM KRAWĘDZI
     food: false,
-    fire: false,
+    fire: 0, # TODO: ZROBIC LISTE BOOL I [] == false, a potem pop
     dash: false
   ]
 
@@ -31,7 +31,7 @@ defmodule Model.Snake do
       apples: 0,
       direction: start_direction(_board_width, _board_height, starting_point),
       food: false,
-      fire: false,
+      fire: 0,
       dash: false
     }
   end
@@ -190,7 +190,7 @@ defmodule Model.Snake do
               1 -> 200
               _ -> Integer.pow(moved_snake.score, moved_snake.apples)
             end
-          %{moved_snake| score: new_score, apples: moved_snake.apples + 1, food: true}
+          %{moved_snake| score: new_score, apples: moved_snake.apples + 1, food: true, fire: if rem(moved_snake.apples, 5) == 0, do: moved_snake.fire+1, else: moved_snake.fire}
       end
 
     # WALL COLLISION
@@ -241,7 +241,7 @@ defmodule Model.Snake do
 
   # Invoked after moving and collision checks?
   # HAS TO MOVE FASTER THAN THE SNAKE XD
-  def fire(snake, board_width, board_height, other_snake_points, apple_point) do
+  def fire(snake, fireball_id) do
 
     # FIRE DESTROYS APPLES AND SNAKES FROM HIT-BLOCK TO TAIL
     snake_head = hd(snake.points)
@@ -258,6 +258,6 @@ defmodule Model.Snake do
           {Point.move_down(snake_head), &Point.move_down/1}
       end
 
-    Point.new_fireball(fireball.coordinates, move_direction_func, snake.id)  # TODO: CZY PRZEKAZYWANIE FUNKCJI TAK ZADZIALA??
+    Point.new_fireball(fireball_id, fireball.coordinates, move_direction_func, snake.id)  # TODO: CZY PRZEKAZYWANIE FUNKCJI TAK ZADZIALA??
   end
 end
