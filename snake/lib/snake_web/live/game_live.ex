@@ -8,12 +8,9 @@ defmodule SnakeWeb.GameLive do
   @field_size 20
 
   def mount(_params, _session, socket) do
-    :timer.send_interval(250, :tick)
+    :timer.send_interval(100, :tick)
     {:ok,
-    assign(socket, :board, Board.new(width: 20, height: 20, snakes: [
-        Snake.new(name: "snake-a", points: [Point.new(coordinates: {5, 5}), Point.new(coordinates: {5, 6}), Point.new(coordinates: {5, 7}), Point.new(coordinates: {6, 7}), Point.new(coordinates: {7, 7})]),
-        Snake.new(name: "snake-b", points: [Point.new(coordinates: {10, 5}), Point.new(coordinates: {10, 6}), Point.new(coordinates: {10, 7}), Point.new(coordinates: {9, 7}), Point.new(coordinates: {9, 8})])
-      ], apples: [Point.new_apple(20, 20, [])]))
+      assign(socket, %{game_state: Logic.GameLoop.init_game(20, 20, "snake-1", "snake-2")})
     }
   end
 
@@ -22,19 +19,36 @@ defmodule SnakeWeb.GameLive do
     <div phx-window-keydown="keystroke">
       <section class="phx-hero">
         <svg width="400" height="400">
-          <%= render_board(assigns) %>
-          <%= render_snake(assigns) %>
-          <%= render_apple(assigns) %>
+          <%= if assigns.game_state.status != :game_over do %>
+            <%= render_board(assigns) %>
+            <%= render_snake(assigns) %>
+            <%= render_apple(assigns) %>
+            <%= render_fireball(assigns) %>
+          <% else %>
+            <%= render_game_over(assigns) %>
+          <% end %>
         </svg>
       </section>
     </div>
+    <pre>
+      <%= inspect assigns.game_status %>
+    </pre>
+    """
+  end
+
+  defp render_game_over(assigns) do
+    field_size = @field_size
+    ~L"""
+    <rect width="<%= assigns.game_state.board.width * field_size %>" height="<%= assigns.game_state.board.height * field_size %>" style="fill:black" />
+    <text x="25" y="100" font-size="70" style="fill:white">Game over</text>
+    <text x="18" y="200" font-size="40" style="fill:white">Press F5 to try again</text>
     """
   end
 
   defp render_board(assigns) do
     field_size = @field_size
     ~L"""
-    <rect width="<%= assigns.board.width * field_size %>" height="<%= assigns.board.height * field_size %>" style="fill:rgb(25,25,25);stroke-width:3;stroke:rgb(255,255,255)" />
+    <rect width="<%= assigns.game_state.board.width * field_size %>" height="<%= assigns.game_state.board.height * field_size %>" style="fill:rgb(25,25,25);stroke-width:3;stroke:rgb(255,255,255)" />
     """
   end
 
@@ -42,16 +56,16 @@ defmodule SnakeWeb.GameLive do
     field_size = @field_size
 
     ~L"""
-    <%= for snake <- assigns.board.snakes do %>
-      <%= for point <- snake.points do %>
+    <%= for {snake_name, {{k1, snake}, {k2, direction}}} <- assigns.game_state.snake_map do %>
+      <%= for {point, no} <- Enum.zip(snake.points, 0..(length(snake.points)-1)) do %>
         <% {x, y} = point.coordinates %>
         <rect width="<%= field_size %>" height="<%= field_size %>"
         x="<%= x * field_size %>" y="<%= y * field_size %>"
         style="fill:
-        <%= if snake.name == "snake-a" do %>
-          rgb(200,100,100);
+        <%= if snake.name == "snake-1" do %>
+          rgb(<%= no*40 %>,200,120)
         <% else %>
-          rgb(100,200,100);
+          rgb(<%= no*40 %>,120,200)
         <% end %>
           " />
       <% end %>
@@ -59,110 +73,133 @@ defmodule SnakeWeb.GameLive do
     """
   end
 
-  # TODO: implement this
   defp render_apple(assigns) do
     field_size = @field_size
 
     ~L"""
-    <%= for apple <- assigns.board.apples do %>
+    <%= for apple <- assigns.game_state.apples do %>
       <% {x, y} = apple.coordinates %>
     <rect width="<%= field_size %>" height="<%= field_size %>"
         x="<%= x * field_size %>" y="<%= y * field_size %>"
-        style="fill:red"/>
+        style="fill:Red"/>
+    <% end %>
+    """
+  end
+
+  defp render_fireball(assigns) do
+    field_size = @field_size
+
+    ~L"""
+    <%= for fireball <- assigns.game_state.fireballs do %>
+      <% {x, y} = fireball.coordinates %>
+    <rect width="<%= field_size %>" height="<%= field_size %>"
+        x="<%= x * field_size %>" y="<%= y * field_size %>"
+        style="fill:Gold"/>
     <% end %>
     """
   end
 
   def handle_info(:tick, socket) do
-    assigns = socket.assigns
-    board = assigns.board
-    [snake_a, snake_b] = board.snakes
-    snake_a = Snake.move_direction(snake_a)
-    snake_b = Snake.move_direction(snake_b)
-    new_snakes = [snake_a, snake_b]
-    board = %{board | snakes: new_snakes}
-    {:noreply, socket |> assign(:board, board)}
+    game_state = Logic.GameLoop.game_loop(socket)
+    # board = %{socket.assigns.board | snakes: moved_snakes}
+    # board = %{board | apples: new_apples}
+
+    {:noreply, socket |> assign(:game_state, game_state)}
   end
 
-  # Works for now, but please rewrite it
-  def handle_event("keystroke", %{"key" => "ArrowRight"}, socket) do
-    assigns = socket.assigns
-    board = assigns.board
-    [snake_a, snake_b] = board.snakes
-    snake_a = Snake.change_direction(snake_a, :right)
-    new_snakes = [snake_a, snake_b]
-    board = %{board | snakes: new_snakes}
-    {:noreply, socket |> assign(:board, board)}
+  # Input handling
+
+  # Snake id 2
+  # TODO: Shooting on 'u', dash on 'o'
+
+  def handle_event("keystroke", %{"key" => "l"}, socket) do
+    game_state = socket.assigns.game_state
+    snake_map = socket.assigns.game_state.snake_map
+    snake_1 = snake_map.snake_1
+    snake_1 = %{snake_1 | new_direction: :right}
+    snake_map = %{snake_map | snake_1: snake_1}
+    game_state = %{game_state | snake_map: snake_map}
+
+    {:noreply, socket |> assign(:game_state, game_state)}
   end
 
-  def handle_event("keystroke", %{"key" => "ArrowUp"}, socket) do
-    assigns = socket.assigns
-    board = assigns.board
-    [snake_a, snake_b] = board.snakes
-    snake_a = Snake.change_direction(snake_a, :up)
-    new_snakes = [snake_a, snake_b]
-    board = %{board | snakes: new_snakes}
-    {:noreply, socket |> assign(:board, board)}
+  def handle_event("keystroke", %{"key" => "i"}, socket) do
+    game_state = socket.assigns.game_state
+    snake_map = socket.assigns.game_state.snake_map
+    snake_1 = snake_map.snake_1
+    snake_1 = %{snake_1 | new_direction: :up}
+    snake_map = %{snake_map | snake_1: snake_1}
+    game_state = %{game_state | snake_map: snake_map}
+
+    {:noreply, socket |> assign(:game_state, game_state)}
   end
 
-  def handle_event("keystroke", %{"key" => "ArrowLeft"}, socket) do
-    assigns = socket.assigns
-    board = assigns.board
-    [snake_a, snake_b] = board.snakes
-    snake_a = Snake.change_direction(snake_a, :left)
-    new_snakes = [snake_a, snake_b]
-    board = %{board | snakes: new_snakes}
-    {:noreply, socket |> assign(:board, board)}
+  def handle_event("keystroke", %{"key" => "j"}, socket) do
+    game_state = socket.assigns.game_state
+    snake_map = socket.assigns.game_state.snake_map
+    snake_1 = snake_map.snake_1
+    snake_1 = %{snake_1 | new_direction: :left}
+    snake_map = %{snake_map | snake_1: snake_1}
+    game_state = %{game_state | snake_map: snake_map}
+
+    {:noreply, socket |> assign(:game_state, game_state)}
   end
 
-  def handle_event("keystroke", %{"key" => "ArrowDown"}, socket) do
-    assigns = socket.assigns
-    board = assigns.board
-    [snake_a, snake_b] = board.snakes
-    snake_a = Snake.change_direction(snake_a, :down)
-    new_snakes = [snake_a, snake_b]
-    board = %{board | snakes: new_snakes}
-    {:noreply, socket |> assign(:board, board)}
+  def handle_event("keystroke", %{"key" => "k"}, socket) do
+    game_state = socket.assigns.game_state
+    snake_map = socket.assigns.game_state.snake_map
+    snake_1 = snake_map.snake_1
+    snake_1 = %{snake_1 | new_direction: :down}
+    snake_map = %{snake_map | snake_1: snake_1}
+    game_state = %{game_state | snake_map: snake_map}
+
+    {:noreply, socket |> assign(:game_state, game_state)}
   end
 
+  # Snake id 2
+  # TODO: Shooting on 'q', dash on 'e'
 
   def handle_event("keystroke", %{"key" => "d"}, socket) do
-    assigns = socket.assigns
-    board = assigns.board
-    [snake_a, snake_b] = board.snakes
-    snake_b = Snake.change_direction(snake_b, :right)
-    new_snakes = [snake_a, snake_b]
-    board = %{board | snakes: new_snakes}
-    {:noreply, socket |> assign(:board, board)}
+    game_state = socket.assigns.game_state
+    snake_map = socket.assigns.game_state.snake_map
+    snake_2 = snake_map.snake_2
+    snake_2 = %{snake_2 | new_direction: :right}
+    snake_map = %{snake_map | snake_2: snake_2}
+    game_state = %{game_state | snake_map: snake_map}
+
+    {:noreply, socket |> assign(:game_state, game_state)}
   end
 
   def handle_event("keystroke", %{"key" => "w"}, socket) do
-    assigns = socket.assigns
-    board = assigns.board
-    [snake_a, snake_b] = board.snakes
-    snake_b = Snake.change_direction(snake_b, :up)
-    new_snakes = [snake_a, snake_b]
-    board = %{board | snakes: new_snakes}
-    {:noreply, socket |> assign(:board, board)}
+    game_state = socket.assigns.game_state
+    snake_map = socket.assigns.game_state.snake_map
+    snake_2 = snake_map.snake_2
+    snake_2 = %{snake_2 | new_direction: :up}
+    snake_map = %{snake_map | snake_2: snake_2}
+    game_state = %{game_state | snake_map: snake_map}
+
+    {:noreply, socket |> assign(:game_state, game_state)}
   end
 
   def handle_event("keystroke", %{"key" => "a"}, socket) do
-    assigns = socket.assigns
-    board = assigns.board
-    [snake_a, snake_b] = board.snakes
-    snake_b = Snake.change_direction(snake_b, :left)
-    new_snakes = [snake_a, snake_b]
-    board = %{board | snakes: new_snakes}
-    {:noreply, socket |> assign(:board, board)}
+    game_state = socket.assigns.game_state
+    snake_map = socket.assigns.game_state.snake_map
+    snake_2 = snake_map.snake_2
+    snake_2 = %{snake_2 | new_direction: :left}
+    snake_map = %{snake_map | snake_2: snake_2}
+    game_state = %{game_state | snake_map: snake_map}
+
+    {:noreply, socket |> assign(:game_state, game_state)}
   end
 
   def handle_event("keystroke", %{"key" => "s"}, socket) do
-    assigns = socket.assigns
-    board = assigns.board
-    [snake_a, snake_b] = board.snakes
-    snake_b = Snake.change_direction(snake_b, :down)
-    new_snakes = [snake_a, snake_b]
-    board = %{board | snakes: new_snakes}
-    {:noreply, socket |> assign(:board, board)}
+    game_state = socket.assigns.game_state
+    snake_map = socket.assigns.game_state.snake_map
+    snake_2 = snake_map.snake_2
+    snake_2 = %{snake_2 | new_direction: :down}
+    snake_map = %{snake_map | snake_2: snake_2}
+    game_state = %{game_state | snake_map: snake_map}
+
+    {:noreply, socket |> assign(:game_state, game_state)}
   end
 end
