@@ -1,5 +1,7 @@
 defmodule Model.Snake do
 
+  require Integer
+
   alias Model.Point, as: Point
 
   defstruct [
@@ -21,15 +23,15 @@ defmodule Model.Snake do
   end
 
 
-  def new_random(_board_width, _board_height, _taken_points, player_name, id) do
-    starting_point = Point.new_random(_board_width, _board_height, _taken_points)
+  def new_random(board_width, board_height, taken_points, player_name, id) do
+    starting_point = Point.new_random(board_width, board_height, taken_points)
     %__MODULE__{ # TODO: CHECKOUT HM? czy module dziala
       id: id,
       name: player_name,
       score: 0,
       points: [starting_point],
       apples: 0,
-      direction: start_direction(_board_width, _board_height, starting_point),
+      direction: start_direction(board_width, board_height, starting_point),
       food: false,
       fire: 0,
       dash: false
@@ -54,7 +56,7 @@ defmodule Model.Snake do
     # TODO: GET AVAILABLE POSITIONS BECAUSE OF THE OTHER SNAKE???
 
     available_directions = [:left, :right, :down, :up]
-    {x, y} = starting_position
+    {x, y} = starting_position.coordinates
 
     width_index = board_width-1
     height_index = board_height-1
@@ -116,7 +118,6 @@ defmodule Model.Snake do
 
 
   def move_direction(snake) do
-    # COND ZWROCI WYNIK MOVE_DIR CZYLI WEZA Z ZAKTUALIZWOANYMI DANYMI
     case snake.direction do
       :left ->
         move_left(snake)
@@ -130,49 +131,44 @@ defmodule Model.Snake do
   end
 
   defp move(snake) do
-    head = hd(snake.points)
     snake_food = snake.food
     case snake_food do
       true ->
         %{snake| food: false}
       false ->
-        removed_tail = snake.points |> Enum.reverse() |> tl() |> Enum.reverse()
-        %{snake| points: [head | removed_tail]}
+        removed_last = snake.points |> Enum.reverse() |> tl() |> Enum.reverse()
+        %{snake| points: removed_last}
     end
   end
 
   def move_down(snake) do
-    snake = move(snake)
     head = hd(snake.points)
-    tail = tl(snake.points)
-    %{snake| points: [Point.move_down(head) | tail]}
+    snake = move(snake)
+    %{snake| points: [Point.move_down(head) | snake.points]}
   end
 
   def move_up(snake) do
-    snake = move(snake)
     head = hd(snake.points)
-    tail = tl(snake.points)
-    %{snake| points: [Point.move_up(head) | tail]}
+    snake = move(snake)
+    %{snake| points: [Point.move_up(head) | snake.points]}
   end
 
   def move_left(snake) do
-    snake = move(snake)
     head = hd(snake.points)
-    tail = tl(snake.points)
-    %{snake| points: [Point.move_left(head) | tail]}
+    snake = move(snake)
+    %{snake| points: [Point.move_left(head) | snake.points]}
   end
 
   def move_right(snake) do
-    snake = move(snake)
     head = hd(snake.points)
-    tail = tl(snake.points)
-    %{snake| points: [Point.move_right(head) | tail]}
+    snake = move(snake)
+    %{snake| points: [Point.move_right(head) | snake.points]}
   end
 
-  # NIE JEST WYWOŁANA BEZPOŚREDNIO Z MOVE)DIRECTION BO NIE MA ONA WIEDZY O STANIE 2 SNAKE'a
+  # NIE JEST WYWOŁANA BEZPOŚREDNIO Z MOVE_DIRECTION BO NIE MA ONA WIEDZY O STANIE 2 SNAKE'a
   def check_collision(moved_snake, board_width, board_height, other_snake_points, apples) do
 
-    [head | tail] = moved_snake
+    [head| _tail] = moved_snake.points
     {hx, hy} = head.coordinates
 
     # MARK IF SHOULD EAT, INC SCORE
@@ -183,23 +179,25 @@ defmodule Model.Snake do
         nil ->
           moved_snake
         _ ->
-          new_score =
-            case moved_snake.score do
+          new_score = moved_snake.apples * 100
+          snake_fire =
+            case rem(moved_snake.apples, 5) do
               0 ->
-                100
-              1 -> 200
-              _ -> Integer.pow(moved_snake.score, moved_snake.apples)
+                moved_snake.fire+1
+              _ ->
+                moved_snake.fire
             end
-          %{moved_snake| score: new_score, apples: moved_snake.apples + 1, food: true, fire: if rem(moved_snake.apples, 5) == 0, do: moved_snake.fire+1, else: moved_snake.fire}
+          %{moved_snake| score: new_score, apples: moved_snake.apples + 1, food: true, fire: snake_fire}
       end
 
     # WALL COLLISION
-    case hx > 0 && hx < board_width && hy > 0 && hy < board_height do
+    case hx >= 0 && hx < board_width && hy >= 0 && hy < board_height do
         false ->
           {:snake_dead, moved_snake, eaten_apple}
         true ->
           # SNAKE COLLISION
-          snake_collision_check = Enum.any?(other_snake_points, fn(other_snake_point) -> head == other_snake_point end)
+          snake_collision_check = Enum.any?(other_snake_points, fn(other_snake_point) -> head.coordinates == other_snake_point end)
+
           case snake_collision_check do
             true ->
               {:snake_dead, moved_snake, eaten_apple}
@@ -214,7 +212,7 @@ defmodule Model.Snake do
     end
   end
 
-  def remove_blockdown(snake, hit_postition) do
+  def remove_blockdown(snake, hit_position) do
     index_to_slice = Enum.find_index(Enum.map(snake.points, fn(position) -> position.coordinates end), hit_position) -1
     case index_to_slice do
       nil ->

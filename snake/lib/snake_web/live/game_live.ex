@@ -8,12 +8,13 @@ defmodule SnakeWeb.GameLive do
   @field_size 20
 
   def mount(_params, _session, socket) do
-    :timer.send_interval(100, :tick)
+    :timer.send_interval(1000, :tick)
     {:ok,
       assign(socket, %{game_state: Logic.GameLoop.init_game(20, 20, "snake-1", "snake-2")})
     }
   end
 
+  # TODO: Przytrzymac ostatnia klatke przez 1-2 sec zeby widoczne byly faile
   def render(assigns) do
     ~L"""
     <div phx-window-keydown="keystroke">
@@ -31,7 +32,7 @@ defmodule SnakeWeb.GameLive do
       </section>
     </div>
     <pre>
-      <%= inspect assigns.game_status %>
+      <%= inspect assigns.game_state.status %>
     </pre>
     """
   end
@@ -56,13 +57,13 @@ defmodule SnakeWeb.GameLive do
     field_size = @field_size
 
     ~L"""
-    <%= for {snake_name, {{k1, snake}, {k2, direction}}} <- assigns.game_state.snake_map do %>
-      <%= for {point, no} <- Enum.zip(snake.points, 0..(length(snake.points)-1)) do %>
+    <%= for {_snake_name, snake_data} <- assigns.game_state.snake_map do %>
+      <%= for {point, no} <- Enum.zip(snake_data.snake.points, 0..(length(snake_data.snake.points)-1)) do %>
         <% {x, y} = point.coordinates %>
         <rect width="<%= field_size %>" height="<%= field_size %>"
         x="<%= x * field_size %>" y="<%= y * field_size %>"
         style="fill:
-        <%= if snake.name == "snake-1" do %>
+        <%= if snake_data.snake.name == "snake-1" do %>
           rgb(<%= no*40 %>,200,120)
         <% else %>
           rgb(<%= no*40 %>,120,200)

@@ -1,10 +1,7 @@
 defmodule Model.Board do
   defstruct [
     width: 0,
-    height: 0,
-    snakes: [],
-    apples: [],
-    points_taken: []
+    height: 0
   ]
 
   def new(options \\ []) do

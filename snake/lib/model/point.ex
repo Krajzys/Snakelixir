@@ -77,8 +77,8 @@ defmodule Model.Point do
     {fx, fy} = fireball_coordinates
 
     # OUT OF BOUNDS CHECK
-    case fx > 0 && fx < board_width && fy > 0 && fy < board_height do
-      True ->
+    case fx >= 0 && fx <= board_width && fy >= 0 && fy <= board_height do
+      true ->
         # FOR EACH SNAKE TRY TO FIND A COLLISION POINT
         snake_collided = Enum.find_value(snakes, {nil, nil}, fn(snake) ->
           collision_point = Enum.find(snake.points, nil, fn(snake_point) -> snake_point.coordinates == fireball_coordinates end)
@@ -86,7 +86,7 @@ defmodule Model.Point do
         end)
 
         # FIND OTHER FIREBALLS THAT COLLIDE WITH OURS
-        other_fireballs_collided = Enum.find_value(other_fireballs, fn(other_fireball) -> if other_fireball.coordinates == fireball_coordinates, do: True end)
+        other_fireballs_collided = Enum.find_value(other_fireballs, fn(other_fireball) -> if other_fireball.coordinates == fireball_coordinates, do: true end)
 
         apple_collided = Enum.find_value(apples, nil, fn(apple) ->
           if apple.coordinates == fireball_coordinates, do: %{apple| color: :apple_hit} # TODO: handle this
@@ -112,7 +112,7 @@ defmodule Model.Point do
           },
           status
         }
-      False ->
+      false ->
         {%{fireball: fireball}, :fireball_bounds_end}
     end
 
