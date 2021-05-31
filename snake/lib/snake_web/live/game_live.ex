@@ -66,7 +66,7 @@ defmodule SnakeWeb.GameLive do
           <rect width="<%= field_size - magic_number %>" height="<%= field_size - magic_number %>"
           x="<%= x * field_size + magic_number/2 %>" y="<%= y * field_size + magic_number/2 %>"
           style="fill:
-          <%= if snake_date.snake.name == "snake-1" do %>
+          <%= if snake_data.snake.name == "snake-1" do %>
             rgb(<%= r_color_number %>,200,120);stroke-width:<%= 2 + magic_number/2 %>;stroke:rgb(<%= r_color_number %>,120,80)
           <% else %>
             rgb(<%= r_color_number %>,120,200);stroke-width:<%= 2 + magic_number/2 %>;stroke:rgb(<%= r_color_number %>,80,120)
