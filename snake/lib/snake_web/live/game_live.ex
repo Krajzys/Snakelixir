@@ -8,7 +8,7 @@ defmodule SnakeWeb.GameLive do
   @field_size 20
 
   def mount(_params, _session, socket) do
-    :timer.send_interval(1000, :tick)
+    :timer.send_interval(500, :tick)
     {:ok,
       assign(socket, %{game_state: Logic.GameLoop.init_game(20, 20, "snake-1", "snake-2")})
     }

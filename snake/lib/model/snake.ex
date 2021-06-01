@@ -12,7 +12,7 @@ defmodule Model.Snake do
     apples: 0,
     direction: :right, # TUTAJ LOSOWANIE, BAZUJĄCE NA POŁOŻENIU WZGLĘDEM KRAWĘDZI
     food: false,
-    fire: 0, # TODO: ZROBIC LISTE BOOL I [] == false, a potem pop
+    fire: 0,
     dash: false
   ]
 
@@ -26,12 +26,12 @@ defmodule Model.Snake do
     %__MODULE__{ # TODO: CHECKOUT HM? czy module dziala
       id: id,
       name: player_name,
-      score: 10000,
+      score: 0,
       points: [starting_point],
       apples: 0,
       direction: start_direction(board_width, board_height, starting_point),
       food: false,
-      fire: 30,
+      fire: 1,
       dash: false
     }
   end
@@ -70,22 +70,18 @@ defmodule Model.Snake do
       {horizontal_wall, _} when horizontal_wall in 0..start_width_safety_margin -> available_directions -- [:left]
       _ -> available_directions
     end
-    # IO.puts(["available dirs == ", Enum.join(available_directions, " ")]) # DEBUG
     available_directions = case {x, y} do
       {_, vertical_wall} when vertical_wall in 0..start_height_safety_margin -> available_directions -- [:up]
       _ -> available_directions
     end
-    # IO.puts(["available dirs == ", Enum.join(available_directions, " ")]) # DEBUG
     available_directions = case {x, y} do
       {horizontal_wall, _} when horizontal_wall in width_index..end_width_safety_margin -> available_directions -- [:right]
       _ -> available_directions
     end
-    # IO.puts(["available dirs == ", Enum.join(available_directions, " ")]) # DEBUG
     available_directions = case {x, y} do
       {_, vertical_wall} when vertical_wall in height_index..end_height_safety_margin -> available_directions -- [:down]
       _ -> available_directions
     end
-    # IO.puts(["available dirs == ", Enum.join(available_directions, " ")]) # DEBUG
     random_direction(available_directions)
   end
 
@@ -214,12 +210,20 @@ defmodule Model.Snake do
   end
 
   def remove_blockdown(snake, hit_position) do
-    index_to_slice = Enum.find_index(Enum.map(snake.points, fn(position) -> position.coordinates end), hit_position) -1
-    case index_to_slice do
-      nil ->
+    index_to_slice = Enum.find_index(Enum.map(snake.points, fn(position) -> position.coordinates end), fn(coords) -> coords == hit_position end)
+    index_to_slice =
+      case index_to_slice do
+        nil ->
+          nil
+        _ -> index_to_slice - 1
+      end
+    cond do
+      index_to_slice == nil ->
         snake
-      _ ->
-        %{snake| points: Enum.slice(snake.points, 0..index_to_slice)} # FIXME CZY TO ZADZIALA ZEBY PRZEKAZAC INDEX ? # CZY SLICE DZIALA
+      index_to_slice < 1 ->
+        %{snake| points: []}
+      true ->
+        %{snake| points: Enum.slice(snake.points, 0..index_to_slice)}
     end
   end
 
@@ -256,7 +260,6 @@ defmodule Model.Snake do
         :down ->
           {Point.move_down(snake_head), &Point.move_down/1}
       end
-
     Point.new_fireball(fireball_id, fireball.coordinates, move_direction_func, snake.id)  # TODO: CZY PRZEKAZYWANIE FUNKCJI TAK ZADZIALA??
   end
 end
