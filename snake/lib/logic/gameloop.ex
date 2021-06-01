@@ -64,7 +64,7 @@ defmodule Logic.GameLoop do
       fireball_ids_to_remove: [],
       apple_ids_to_remove: [],
       iteration: 0,
-      status: :game_ok
+      status: :game_start
     }
   end
 
@@ -151,7 +151,7 @@ defmodule Logic.GameLoop do
     {snake1, snake2}
   end
 
-  def game_loop(socket) when socket.assigns.game_state.status == :game_over do
+  def game_loop(socket) when socket.assigns.game_state.status in [:game_over, :game_start] do
     socket.assigns.game_state
   end
 

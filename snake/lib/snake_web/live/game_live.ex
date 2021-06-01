@@ -14,6 +14,8 @@ defmodule SnakeWeb.GameLive do
     }
   end
 
+  # TODO: fireballe 2x szybsze
+  # TODO: ekran startowania gierki
   # TODO: Przytrzymac ostatnia klatke przez 1-2 sec zeby widoczne byly faile
   def render(assigns) do
     ~L"""
@@ -23,13 +25,20 @@ defmodule SnakeWeb.GameLive do
         <%= render_score(assigns, 0) %>
         </svg>
         <svg width="400" height="400">
-          <%= if assigns.game_state.status != :game_over do %>
-            <%= render_board(assigns) %>
-            <%= render_snake(assigns) %>
-            <%= render_apple(assigns) %>
-            <%= render_fireball(assigns) %>
-          <% else %>
-            <%= render_game_over(assigns) %>
+          <%= case assigns.game_state.status do %>
+          <%    gstate when gstate in [:game_ok, :game_start] -> %>
+              <%= render_board(assigns) %>
+              <%= render_snake(assigns) %>
+              <%= render_apple(assigns) %>
+              <%= render_fireball(assigns) %>
+              <%= if gstate == :game_start do %>
+                <text text-anchor="middle" x="200" y="100" font-size="70" style="fill:white">Welcome to</text>
+                <text text-anchor="middle" x="200" y="170" font-size="70" style="fill:white">Snakelixir</text>
+                <text text-anchor="middle" x="200" y="250" font-size="40" style="fill:white">Press g to start</text>
+                <%= render_tutorial(assigns) %>
+              <% end %>
+          <%    :game_over -> %>
+              <%= render_game_over(assigns) %>
           <% end %>
         </svg>
         <svg width="100" height="400">
@@ -40,6 +49,29 @@ defmodule SnakeWeb.GameLive do
     <pre>
       <%= inspect assigns.game_state.status %>
     </pre>
+    """
+  end
+
+  defp render_tutorial(assigns) do
+    color_1 = "rgb(80,200,120)"
+    color_2 = "rgb(80,120,200)"
+
+    ~L"""
+    <text text-anchor="middle" x="270" y="280" font-size="10" style="fill:white">fireball</text>
+    <text text-anchor="middle" x="300" y="280" font-size="10" style="fill:white">up</text>
+    <text text-anchor="middle" x="300" y="300" font-size="30" style="fill:<%= color_2 %>">q w e</text>
+    <text text-anchor="middle" x="270" y="330" font-size="10" style="fill:white">left</text>
+    <text text-anchor="middle" x="300" y="330" font-size="10" style="fill:white">down</text>
+    <text text-anchor="middle" x="330" y="330" font-size="10" style="fill:white">right</text>
+    <text text-anchor="middle" x="300" y="350" font-size="30" style="fill:<%= color_2 %>">a s d</text>
+
+    <text text-anchor="middle" x="70" y="280" font-size="10" style="fill:white">fireball</text>
+    <text text-anchor="middle" x="100" y="280" font-size="10" style="fill:white">up</text>
+    <text text-anchor="middle" x="100" y="300" font-size="30" style="fill:<%= color_1 %>">u i o</text>
+    <text text-anchor="middle" x="70" y="330" font-size="10" style="fill:white">left</text>
+    <text text-anchor="middle" x="100" y="330" font-size="10" style="fill:white">down</text>
+    <text text-anchor="middle" x="130" y="330" font-size="10" style="fill:white">right</text>
+    <text text-anchor="middle" x="100" y="350" font-size="30" style="fill:<%= color_1 %>">j k l</text>
     """
   end
 
@@ -59,21 +91,21 @@ defmodule SnakeWeb.GameLive do
     <text text-anchor="middle" x="200" y="100" font-size="70" style="fill:white">Game over</text>
     <text text-anchor="middle" x="200" y="200" font-size="40" style="fill:white">Press F5 to try again</text>
 
-    <text text-anchor="middle" x="70" y="280" font-size="10" style="fill:white">fireball</text>
-    <text text-anchor="middle" x="100" y="280" font-size="10" style="fill:white">up</text>
-    <text text-anchor="middle" x="100" y="300" font-size="30" style="fill:<%= color_1 %>">q w e</text>
-    <text text-anchor="middle" x="70" y="330" font-size="10" style="fill:white">left</text>
-    <text text-anchor="middle" x="100" y="330" font-size="10" style="fill:white">down</text>
-    <text text-anchor="middle" x="130" y="330" font-size="10" style="fill:white">right</text>
-    <text text-anchor="middle" x="100" y="350" font-size="30" style="fill:<%= color_1 %>">a s d</text>
-
     <text text-anchor="middle" x="270" y="280" font-size="10" style="fill:white">fireball</text>
     <text text-anchor="middle" x="300" y="280" font-size="10" style="fill:white">up</text>
-    <text text-anchor="middle" x="300" y="300" font-size="30" style="fill:<%= color_2 %>">u i o</text>
+    <text text-anchor="middle" x="300" y="300" font-size="30" style="fill:<%= color_2 %>">q w e</text>
     <text text-anchor="middle" x="270" y="330" font-size="10" style="fill:white">left</text>
     <text text-anchor="middle" x="300" y="330" font-size="10" style="fill:white">down</text>
     <text text-anchor="middle" x="330" y="330" font-size="10" style="fill:white">right</text>
-    <text text-anchor="middle" x="300" y="350" font-size="30" style="fill:<%= color_2 %>">j k l</text>
+    <text text-anchor="middle" x="300" y="350" font-size="30" style="fill:<%= color_2 %>">a s d</text>
+
+    <text text-anchor="middle" x="70" y="280" font-size="10" style="fill:white">fireball</text>
+    <text text-anchor="middle" x="100" y="280" font-size="10" style="fill:white">up</text>
+    <text text-anchor="middle" x="100" y="300" font-size="30" style="fill:<%= color_1 %>">u i o</text>
+    <text text-anchor="middle" x="70" y="330" font-size="10" style="fill:white">left</text>
+    <text text-anchor="middle" x="100" y="330" font-size="10" style="fill:white">down</text>
+    <text text-anchor="middle" x="130" y="330" font-size="10" style="fill:white">right</text>
+    <text text-anchor="middle" x="100" y="350" font-size="30" style="fill:<%= color_1 %>">j k l</text>
     """
   end
 
@@ -211,6 +243,16 @@ defmodule SnakeWeb.GameLive do
 
   # Input handling
 
+  def handle_event("keystroke", %{"key" => "g"}, socket) do
+    game_state = socket.assigns.game_state
+    game_state = if game_state.status != :game_over do
+      Logger.info("pressed g")
+      %{game_state | status: :game_ok}
+    end
+
+    {:noreply, socket |> assign(:game_state, game_state)}
+  end
+
   # Snake id 2
   # TODO: Shooting on 'u', dash on 'o'
 
@@ -325,5 +367,9 @@ defmodule SnakeWeb.GameLive do
     game_state = %{game_state | snake_map: snake_map}
 
     {:noreply, socket |> assign(:game_state, game_state)}
+  end
+
+  def handle_event("keystroke", _whatever, socket) do
+    {:noreply, socket}
   end
 end
