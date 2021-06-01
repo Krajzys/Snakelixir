@@ -265,7 +265,7 @@ defmodule Logic.GameLoop do
         snake_dead = snake_data.snake_dead
 
         case should_fire do
-          true when snake_dead != true and snake.fire != 0 -> # FIXME UNCOMMENT
+          true when snake_dead != true and snake.fire != 0 ->
             snake = %{snake| fire: snake.fire - 1}
             updated_snake_data = %{snake_data| snake: snake, fire: false}
             acc_map = Map.put(acc_map, snake_name, updated_snake_data)

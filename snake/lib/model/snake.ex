@@ -33,7 +33,7 @@ defmodule Model.Snake do
       apples: 0,
       direction: start_direction(board_width, board_height, starting_point),
       food: false,
-      fire: 10,  # FIXME NA 0 ZMIEN
+      fire: 1,
       dash: false
     }
   end
@@ -225,7 +225,7 @@ defmodule Model.Snake do
       index_to_slice < 1 ->
         %{snake| points: []}
       true ->
-        %{snake| points: Enum.slice(snake.points, 0..index_to_slice)} # FIXME CZY TO ZADZIALA ZEBY PRZEKAZAC INDEX ? # CZY SLICE DZIALA
+        %{snake| points: Enum.slice(snake.points, 0..index_to_slice)}
     end
   end
 
