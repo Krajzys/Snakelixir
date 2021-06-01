@@ -173,7 +173,7 @@ defmodule Model.Snake do
         nil ->
           moved_snake
         _ ->
-          new_score = moved_snake.apples * 100
+          new_score = (moved_snake.apples + 1) * 100
           snake_fire =
             case rem(moved_snake.apples, 5) do
               0 ->
