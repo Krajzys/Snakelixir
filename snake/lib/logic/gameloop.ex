@@ -61,17 +61,15 @@ defmodule Logic.GameLoop do
   end
 
   defp snakes_move(snake_map) do
-    {_, snake_map} =
-      Enum.map_reduce(snake_map, snake_map, fn({snake_name, snake_data}, acc_map) ->
+    snake_map =
+      Enum.reduce(snake_map, snake_map, fn({snake_name, snake_data}, acc_map) ->
         current_snake = snake_data.snake
-        current_snake_id = current_snake.id
         new_direction = snake_data.new_direction
 
         snake_new_dir = Snake.change_direction(current_snake, new_direction)
         moved_snake = Snake.move_direction(snake_new_dir)
 
-        acc_map = Map.put(acc_map, snake_name, %{Map.get(acc_map, snake_name) | snake: moved_snake})
-        {current_snake_id, acc_map}
+        Map.put(acc_map, snake_name, %{Map.get(acc_map, snake_name) | snake: moved_snake})
       end)
     snake_map
   end
@@ -132,15 +130,14 @@ defmodule Logic.GameLoop do
 
 
   defp snakes_fireball_damage(fireball_collision_checks, snake_1, snake_2) do
-    {_, %{snake_1: snake1, snake_2: snake2}} =
+    %{snake_1: snake1, snake_2: snake2} =
       fireball_collision_checks
       |> Enum.filter(fn({_map, status}) -> status == :fireball_snake_end end)
-      |> Enum.map_reduce(%{snake_1: snake_1, snake_2: snake_2},
+      |> Enum.reduce(%{snake_1: snake_1, snake_2: snake_2},
           fn({map, _status}, acc_map) ->
             {snake, collision_point} = map.snake_collided
             snake_id = snake.id
-            acc_map = Map.update(acc_map, String.to_atom("snake_#{snake_id}"), :default , fn(s) -> Snake.remove_blockdown(s, collision_point.coordinates) end)
-            {collision_point, acc_map}
+            Map.update(acc_map, String.to_atom("snake_#{snake_id}"), :default , fn(s) -> Snake.remove_blockdown(s, collision_point.coordinates) end)
           end)
     {snake1, snake2}
   end
