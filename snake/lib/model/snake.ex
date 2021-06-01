@@ -258,7 +258,6 @@ defmodule Model.Snake do
         :down ->
           {Point.move_down(snake_head), &Point.move_down/1}
       end
-
     Point.new_fireball(fireball_id, fireball.coordinates, move_direction_func, snake.id)  # TODO: CZY PRZEKAZYWANIE FUNKCJI TAK ZADZIALA??
   end
 end

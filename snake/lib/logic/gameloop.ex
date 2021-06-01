@@ -186,8 +186,12 @@ defmodule Logic.GameLoop do
           cond do
             iteration < 10 ->
               {[Point.new_apple(next_apple_id, board.width, board.height, points_taken)], next_apple_id+1}
-            true ->
-              Enum.map_reduce(1..div(iteration, 10), next_apple_id, fn(_num, apple_id) -> {Point.new_apple(apple_id, board.width, board.height, points_taken), apple_id+1} end)
+            true ->  # FIXME POINTS TAKEN MUSI SIE ZMIENIAC W REDUCE!!!!!!!!!!!!!!!
+              acc = {next_apple_id, points_taken}
+              Enum.map_reduce(1..div(iteration, 10), acc, fn(_num, {apple_id, points_taken}) ->
+                new_apple = Point.new_apple(apple_id, board.width, board.height, points_taken)
+                {apple_id+1, [new_apple.coordinates|points_taken]}
+              end)
           end
         _ ->
           {apples, next_apple_id}
