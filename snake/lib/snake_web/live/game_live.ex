@@ -19,6 +19,9 @@ defmodule SnakeWeb.GameLive do
     ~L"""
     <div phx-window-keydown="keystroke">
       <section class="phx-hero">
+        <svg width="100" height="400">
+        <%= render_score(assigns, 0) %>
+        </svg>
         <svg width="400" height="400">
           <%= if assigns.game_state.status != :game_over do %>
             <%= render_board(assigns) %>
@@ -28,6 +31,9 @@ defmodule SnakeWeb.GameLive do
           <% else %>
             <%= render_game_over(assigns) %>
           <% end %>
+        </svg>
+        <svg width="100" height="400">
+        <%= render_score(assigns, 1) %>
         </svg>
       </section>
     </div>
@@ -39,10 +45,57 @@ defmodule SnakeWeb.GameLive do
 
   defp render_game_over(assigns) do
     field_size = @field_size
+    color_1 = "rgb(80,200,120)"
+    color_2 = "rgb(80,120,200)"
+
     ~L"""
-    <rect width="<%= assigns.game_state.board.width * field_size %>" height="<%= assigns.game_state.board.height * field_size %>" style="fill:black" />
-    <text x="25" y="100" font-size="70" style="fill:white">Game over</text>
-    <text x="18" y="200" font-size="40" style="fill:white">Press F5 to try again</text>
+    <defs>
+      <linearGradient id="BoardStroke" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0%" stop-color="rgb(80,200,120)"/>
+          <stop offset="100%" stop-color="rgb(80,120,200)"/>
+      </linearGradient>
+    </defs>
+    <rect width="<%= assigns.game_state.board.width * field_size %>" height="<%= assigns.game_state.board.height * field_size %>" style="fill:black;stroke-width:3;stroke:url(#BoardStroke)" />
+    <text text-anchor="middle" x="200" y="100" font-size="70" style="fill:white">Game over</text>
+    <text text-anchor="middle" x="200" y="200" font-size="40" style="fill:white">Press F5 to try again</text>
+
+    <text text-anchor="middle" x="70" y="280" font-size="10" style="fill:white">fireball</text>
+    <text text-anchor="middle" x="100" y="280" font-size="10" style="fill:white">up</text>
+    <text text-anchor="middle" x="100" y="300" font-size="30" style="fill:<%= color_1 %>">q w e</text>
+    <text text-anchor="middle" x="70" y="330" font-size="10" style="fill:white">left</text>
+    <text text-anchor="middle" x="100" y="330" font-size="10" style="fill:white">down</text>
+    <text text-anchor="middle" x="130" y="330" font-size="10" style="fill:white">right</text>
+    <text text-anchor="middle" x="100" y="350" font-size="30" style="fill:<%= color_1 %>">a s d</text>
+
+    <text text-anchor="middle" x="270" y="280" font-size="10" style="fill:white">fireball</text>
+    <text text-anchor="middle" x="300" y="280" font-size="10" style="fill:white">up</text>
+    <text text-anchor="middle" x="300" y="300" font-size="30" style="fill:<%= color_2 %>">u i o</text>
+    <text text-anchor="middle" x="270" y="330" font-size="10" style="fill:white">left</text>
+    <text text-anchor="middle" x="300" y="330" font-size="10" style="fill:white">down</text>
+    <text text-anchor="middle" x="330" y="330" font-size="10" style="fill:white">right</text>
+    <text text-anchor="middle" x="300" y="350" font-size="30" style="fill:<%= color_2 %>">j k l</text>
+    """
+  end
+
+  defp render_score(assigns, index) do
+    field_size = @field_size
+    snake_map = assigns.game_state.snake_map
+    {curr_snake, snake_color} = if index == 0 do
+      {snake_map.snake_1.snake, "rgb(80,200,120)"}
+    else
+      {snake_map.snake_2.snake, "rgb(80,120,200)"}
+    end
+    ~L"""
+    <rect width="100" height="400" style="fill:black;stroke-width:3;stroke:<%= snake_color %>"/>
+    <text text-anchor="middle" x="50" y="30" font-size="20" font-weight="bold" style="fill:<%= snake_color %>"><%= curr_snake.name %></text>
+    <text text-anchor="middle" x="50" y="60" font-size="20" style="fill:<%= snake_color %>">score:</text>
+    <text text-anchor="middle" x="50" y="90" font-size="20" style="fill:white"><%= curr_snake.score %></text>
+    <text text-anchor="middle" x="50" y="120" font-size="20" style="fill:<%= snake_color %>">fireballs:</text>
+    <text text-anchor="middle" x="50" y="150" font-size="20" style="fill:white"><%= curr_snake.fire %></text>
+
+    <%= for fireball <- 0..curr_snake.fire do %>
+      <%= if fireball != 0, do: render_fireball_at(assigns, rem(fireball-1, 3)*field_size+30, 180+div(fireball-1, 3)*field_size, 20) %>
+    <% end %>
     """
   end
 
@@ -60,9 +113,13 @@ defmodule SnakeWeb.GameLive do
         <stop offset="50%" stop-color="#625522" stop-opacity="20%"/>
         <stop offset="100%" stop-color="#241300" stop-opacity="20%"/>
       </linearGradient>
+      <linearGradient id="BoardStroke" x1="0" x2="1" y1="0" y2="0">
+        <stop offset="0%" stop-color="rgb(80,200,120)"/>
+        <stop offset="50%" stop-color="rgb(80,120,200)"/>
+      </linearGradient>
     </defs>
-    <rect width="<%= assigns.game_state.board.width * field_size %>" height="<%= assigns.game_state.board.height * field_size %>" fill="url(#Gradient2)"/>
-    <rect width="<%= assigns.game_state.board.width * field_size %>" height="<%= assigns.game_state.board.height * field_size %>" fill="green" opacity="20%"/>
+    <rect width="<%= assigns.game_state.board.width * field_size %>" height="<%= assigns.game_state.board.height * field_size %>" fill="url(#Gradient2)" style="stroke-width:3;stroke:url(#BoardStroke)"/>
+    <rect width="<%= assigns.game_state.board.width * field_size %>" height="<%= assigns.game_state.board.height * field_size %>" fill="green" opacity="20%" style="stroke-width:3;stroke:url(#BoardStroke)"/>
     """
   end
 
@@ -130,6 +187,20 @@ defmodule SnakeWeb.GameLive do
     """
   end
 
+  defp render_fireball_at(assigns, x, y, r) do
+    ~L"""
+    <circle r="<%= r/2 %>"
+        cx="<%= x %>" cy="<%= y %>"
+        style="fill:DodgerBlue;stroke-width:2;stroke:rgb(50, 93, 129)"/>
+    <circle r="<%= r/3 %>"
+        cx="<%= x %>" cy="<%= y %>"
+        style="fill:SteelBlue;stroke-width:2;stroke:SteelBlue"/>
+    <circle r="<%= r/5 %>"
+        cx="<%= x %>" cy="<%= y %>"
+        style="fill:White;stroke-width:2;stroke:SkyBlue"/>
+    """
+  end
+
   def handle_info(:tick, socket) do
     game_state = Logic.GameLoop.game_loop(socket)
     # board = %{socket.assigns.board | snakes: moved_snakes}
@@ -187,6 +258,17 @@ defmodule SnakeWeb.GameLive do
     {:noreply, socket |> assign(:game_state, game_state)}
   end
 
+  def handle_event("keystroke", %{"key" => "u"}, socket) do
+    game_state = socket.assigns.game_state
+    snake_map = socket.assigns.game_state.snake_map
+    snake_1 = snake_map.snake_1
+    snake_1 = %{snake_1 | fire: true}
+    snake_map = %{snake_map | snake_1: snake_1}
+    game_state = %{game_state | snake_map: snake_map}
+
+    {:noreply, socket |> assign(:game_state, game_state)}
+  end
+
   # Snake id 2
   # TODO: Shooting on 'q', dash on 'e'
 
@@ -228,6 +310,17 @@ defmodule SnakeWeb.GameLive do
     snake_map = socket.assigns.game_state.snake_map
     snake_2 = snake_map.snake_2
     snake_2 = %{snake_2 | new_direction: :down}
+    snake_map = %{snake_map | snake_2: snake_2}
+    game_state = %{game_state | snake_map: snake_map}
+
+    {:noreply, socket |> assign(:game_state, game_state)}
+  end
+
+  def handle_event("keystroke", %{"key" => "q"}, socket) do
+    game_state = socket.assigns.game_state
+    snake_map = socket.assigns.game_state.snake_map
+    snake_2 = snake_map.snake_2
+    snake_2 = %{snake_2 | fire: true}
     snake_map = %{snake_map | snake_2: snake_2}
     game_state = %{game_state | snake_map: snake_map}
 

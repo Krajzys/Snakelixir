@@ -145,6 +145,9 @@ defmodule Logic.GameLoop do
     {snake1, snake2}
   end
 
+  def game_loop(socket) when socket.assigns.game_state.status == :game_over do
+    socket.assigns.game_state
+  end
 
   # TODO: TIMOUT WAIT UNTIL THE PLAYERS BOTH CONFIRM THEY'RE READY
   def game_loop(socket) do

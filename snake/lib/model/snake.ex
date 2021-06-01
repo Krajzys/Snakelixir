@@ -16,8 +16,6 @@ defmodule Model.Snake do
     dash: false
   ]
 
-  # TODO: REPLACE STRINGS FOR DIRECTIONS WITH ATOMS?
-
   def new(options \\ []) do
     __struct__(options)
   end
@@ -28,12 +26,12 @@ defmodule Model.Snake do
     %__MODULE__{ # TODO: CHECKOUT HM? czy module dziala
       id: id,
       name: player_name,
-      score: 0,
+      score: 10000,
       points: [starting_point],
       apples: 0,
       direction: start_direction(board_width, board_height, starting_point),
       food: false,
-      fire: 0,
+      fire: 30,
       dash: false
     }
   end
