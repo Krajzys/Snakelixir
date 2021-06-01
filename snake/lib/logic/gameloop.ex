@@ -146,6 +146,7 @@ defmodule Logic.GameLoop do
 
             snake = Map.get(acc_map, String.to_atom("snake_#{snake_id}"), %{})
             updated_snake = Snake.remove_blockdown(snake, collision_point.coordinates)
+            updated_snake = %{updated_snake| apples: length(updated_snake.points), score: length(updated_snake.points) * 100}
             Map.put(acc_map, String.to_atom("snake_#{snake_id}"), updated_snake)
           end)
     {snake1, snake2}
