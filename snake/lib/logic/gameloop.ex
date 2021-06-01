@@ -1,13 +1,12 @@
 defmodule Logic.GameLoop do
+  require Logger
 
   alias Model.Board, as: Board
   alias Model.Point, as: Point
   alias Model.Snake, as: Snake
 
   # ARBITRARY CONSTANT VALUES TO FEED INTO THE GAME-LOOP
-  @snake_speed 1
-  @dash_speed 3
-  @fireball_speed 2
+  @snake_move_every 2
 
   # TODO: map_reduce -> reduce
 
@@ -156,10 +155,7 @@ defmodule Logic.GameLoop do
     socket.assigns.game_state
   end
 
-  # TODO: TIMOUT WAIT UNTIL THE PLAYERS BOTH CONFIRM THEY'RE READY
   def game_loop(socket) do
-
-    # TODO: SPAWNOWANIE JABLEK!!!!!!!!! I PUNKTY ITP
 
     # GAME FLOW:
     # REMOVE ALL DESTROYED OBJECTS
@@ -210,7 +206,12 @@ defmodule Logic.GameLoop do
       end
 
     # MOVE SNAKES
-    snake_map = snakes_move(snake_map) # FIXME UNCOMMENT
+    snake_map = if rem(iteration, @snake_move_every) == 0 do
+      snakes_move(snake_map)
+    else
+      snake_map
+    end
+    # snake_map = snakes_move(snake_map)
 
     # MOVE FIREBALLS
     fireballs = fireballs_move(fireballs)
@@ -220,7 +221,8 @@ defmodule Logic.GameLoop do
 
     # ADD EATEN APPLES TO THE REMOVED SET
     eaten_apples =
-      Enum.filter(snake_statuses, fn({status, _snake_id, _snake, _apple}) -> status == :game_food end)
+      Enum.filter(snake_statuses, fn({status, _snake_id, _snake, apple}) -> status == :game_food and apple != nil end)
+      # Enum.filter(snake_statuses, fn({status, _snake_id, _snake, _apple}) -> status == :game_food end)
       |> Enum.map(fn({_status, _snake_id, _snake, apple}) -> apple.id end)
 
     apple_ids_to_remove = eaten_apples

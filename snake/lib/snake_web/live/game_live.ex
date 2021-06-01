@@ -1,22 +1,16 @@
 defmodule SnakeWeb.GameLive do
   use SnakeWeb, :live_view
   require Logger
-  alias Model.Snake
-  alias Model.Board
-  alias Model.Point
 
   @field_size 20
 
   def mount(_params, _session, socket) do
-    :timer.send_interval(500, :tick)
+    :timer.send_interval(150, :tick)
     {:ok,
       assign(socket, %{game_state: Logic.GameLoop.init_game(20, 20, "snake-1", "snake-2")})
     }
   end
 
-  # TODO: fireballe 2x szybsze
-  # TODO: ekran startowania gierki
-  # TODO: Przytrzymac ostatnia klatke przez 1-2 sec zeby widoczne byly faile
   def render(assigns) do
     ~L"""
     <div phx-window-keydown="keystroke">
@@ -246,7 +240,6 @@ defmodule SnakeWeb.GameLive do
   def handle_event("keystroke", %{"key" => "g"}, socket) do
     game_state = socket.assigns.game_state
     game_state = if game_state.status != :game_over do
-      Logger.info("pressed g")
       %{game_state | status: :game_ok}
     end
 
