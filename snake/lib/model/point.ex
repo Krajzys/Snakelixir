@@ -73,6 +73,7 @@ defmodule Model.Point do
   end
 
   def check_fireball_collision(fireball, board_width, board_height, snakes, apples, other_fireballs) do
+
     fireball_coordinates = fireball.coordinates
     {fx, fy} = fireball_coordinates
 
@@ -80,10 +81,11 @@ defmodule Model.Point do
     case fx >= 0 && fx <= board_width && fy >= 0 && fy <= board_height do
       true ->
         # FOR EACH SNAKE TRY TO FIND A COLLISION POINT
-        snake_collided = Enum.find_value(snakes, {nil, nil}, fn(snake) ->
-          collision_point = Enum.find(snake.points, nil, fn(snake_point) -> snake_point.coordinates == fireball_coordinates end)
-          if collision_point != nil, do: {snake, %{collision_point| color: :snake_hit}} # TODO: COLOR
-        end)
+        snake_collided =
+          Enum.map(snakes, fn(snake) -> {snake, Enum.find(snake.points, nil, fn(snake_point) -> snake_point.coordinates == fireball_coordinates end)} end)
+          |> Enum.filter(fn({_snake, collision}) -> collision != nil end)
+
+        snake_collided = if length(snake_collided) > 0, do: Enum.at(snake_collided, 0), else: nil
 
         # FIND OTHER FIREBALLS THAT COLLIDE WITH OURS
         other_fireballs_collided = Enum.find_value(other_fireballs, fn(other_fireball) -> if other_fireball.coordinates == fireball_coordinates, do: true end)
@@ -94,11 +96,11 @@ defmodule Model.Point do
 
         {fireball, status} =
           cond do
-            snake_collided != {nil, nil} ->
+            snake_collided != nil ->
               {%{fireball| color: :snake_hit}, :fireball_snake_end}
             apple_collided != nil ->
               {%{fireball| color: :apple_hit}, :fireball_apple_end}
-            other_fireballs_collided != [] ->
+            other_fireballs_collided != nil ->
               {%{fireball| color: :fireball_hit}, :fireball_end}
             true ->
               {fireball, :fireball_ok}

@@ -35,6 +35,14 @@ defmodule Logic.GameLoop do
     apple = Point.new_apple(apple_id, board_width, board_height, occupied_coordinates)
     # occupied_coordinates = occupied_coordinates ++ [apple.coordinates]
 
+    # FIXME UNDO 2 LINES
+    # p1 = Enum.at(snake_1.points, 0)
+    # p2 = Enum.at(snake_2.points, 0)
+    # p1 = %{p1| coordinates: {1, 1}}
+    # p2 = %{p2| coordinates: {3, 1}}
+    # snake_1 = %{snake_1| points: [p1], direction: :right}
+    # snake_2 = %{snake_2| points: [p2], direction: :left}
+
     fireball_list = []
 
     # game_state
@@ -96,24 +104,22 @@ defmodule Logic.GameLoop do
   end
 
   defp fireballs_move(fireballs) do
-    Enum.map(fireballs, fn(fireball) -> fireball.direction.(fireball) end)
+    Enum.map(fireballs, fn(fireball) ->
+      fireball.direction.(fireball)
+    end)
   end
 
   defp fireballs_collision(fireballs, board, snakes, apples) do
     Enum.map(fireballs, fn(current_fireball) ->
-      {
         Point.check_fireball_collision( # CZY KOLORY NA ZEWNATRZ ZMIENIAC
-          current_fireball,
-          board.width,
-          board.height,
-          snakes,
-          apples,
-          Enum.map(
-            Enum.filter(fireballs, fn(filter_fireball) -> filter_fireball.id != current_fireball.id end),
-            fn(fireball) -> fireball.coordinates end)
-        )
-      }
-      end)
+        current_fireball,
+        board.width,
+        board.height,
+        snakes,
+        apples,
+        Enum.filter(fireballs, fn(filter_fireball) -> filter_fireball.id != current_fireball.id end)
+      )
+    end)
   end
 
   defp mark_fireballs(fireball_collision_checks) do
@@ -137,7 +143,10 @@ defmodule Logic.GameLoop do
           fn({map, _status}, acc_map) ->
             {snake, collision_point} = map.snake_collided
             snake_id = snake.id
-            Map.update(acc_map, String.to_atom("snake_#{snake_id}"), :default , fn(s) -> Snake.remove_blockdown(s, collision_point.coordinates) end)
+
+            snake = Map.get(acc_map, String.to_atom("snake_#{snake_id}"), %{})
+            updated_snake = Snake.remove_blockdown(snake, collision_point.coordinates)
+            Map.put(acc_map, String.to_atom("snake_#{snake_id}"), updated_snake)
           end)
     {snake1, snake2}
   end
@@ -167,7 +176,7 @@ defmodule Logic.GameLoop do
     apple_ids_to_remove = game_state.apple_ids_to_remove
     iteration = game_state.iteration
 
-    # TODO: JESLI NIE MA MIEJSCA TO NIE ROB JABLEK
+
     # AT THE STAR OF THE ITERATION, REMOVE USED UP OBJECTS
     apples = Enum.filter(apples, fn(apple) -> !Enum.member?(apple_ids_to_remove, apple.id) end)
     fireballs = Enum.filter(fireballs, fn(fireball) -> !Enum.member?(fireball_ids_to_remove, fireball.id) end)
@@ -183,7 +192,7 @@ defmodule Logic.GameLoop do
           cond do
             iteration < 10 ->
               {[Point.new_apple(next_apple_id, board.width, board.height, points_taken)], next_apple_id}
-            true ->  # FIXME POINTS TAKEN MUSI SIE ZMIENIAC W REDUCE!!!!!!!!!!!!!!!
+            true ->
               acc = {next_apple_id, points_taken}
               {apples, {next_apple_id, _}} =
                 Enum.map_reduce(1..div(iteration, 10), acc, fn(_num, {apple_id, points_taken}) ->
@@ -197,7 +206,7 @@ defmodule Logic.GameLoop do
       end
 
     # MOVE SNAKES
-    snake_map = snakes_move(snake_map)
+    snake_map = snakes_move(snake_map) # FIXME UNCOMMENT
 
     # MOVE FIREBALLS
     fireballs = fireballs_move(fireballs)
@@ -222,7 +231,7 @@ defmodule Logic.GameLoop do
     snake_2_dead = elem(snake_2_status_tuple, 0) == :game_dead
 
     # CHECK FIREBALL COLLISIONS
-    fireball_collision_checks = fireballs_collision(fireballs, board, [snake_1|snake_2], apples)
+    fireball_collision_checks = fireballs_collision(fireballs, board, [snake_1]++[snake_2], apples)
 
     # MARK FIREBALLS FOR DELETION AT THE START OF A NEW ITERATION
     fireball_ids_to_remove = mark_fireballs(fireball_collision_checks)
@@ -242,54 +251,52 @@ defmodule Logic.GameLoop do
     snake_map = %{snake_map| snake_1: %{snake_map.snake_1| snake: snake_1}}
     snake_map = %{snake_map| snake_2: %{snake_map.snake_2| snake: snake_2}}
 
-    # FIXME: UNCOMMENT
+    snake_map_extra = %{snake_map| snake_1: Map.put(snake_map.snake_1, :snake_dead, snake_1_dead)}
+    snake_map_extra = %{snake_map_extra| snake_2: Map.put(snake_map.snake_2, :snake_dead, snake_2_dead)}
 
-    # snake_map_extra = %{snake_map| snake_1: Map.put(snake_map.snake_1, :snake_dead, snake_1_dead)}
-    # snake_map_extra = %{snake_map_extra| snake_2: Map.put(snake_map.snake_2, :snake_dead, snake_2_dead)}
-
-    # reduce_acc = {snake_map, next_fireball_id}
+    reduce_acc = {snake_map_extra, next_fireball_id}
 
     # SPAWN NEW FIREBALLS IF NEEDED
-    # {new_fireballs, {snake_map, next_fireball_id}} =
-    #   Enum.map_reduce(snake_map_extra, reduce_acc, fn({snake_name, snake_data}, {acc_map, fireball_id}) ->
+    {new_fireballs, {snake_map, next_fireball_id}} =
+      Enum.map_reduce(snake_map_extra, reduce_acc, fn({snake_name, snake_data}, {acc_map, fireball_id}) ->
 
-    #     snake = snake_data.snake
-    #     should_fire = snake_data.fire
-    #     snake_dead = snake_data.snake_dead
+        snake = snake_data.snake
+        should_fire = snake_data.fire
+        snake_dead = snake_data.snake_dead
 
-    #     case should_fire do
-    #       true when snake_dead != true and snake.fire != 0 ->
-    #         # acc_map = Map.update(Map.get(acc_map, snake_name, %{}), :fire, :fire, false)
-    #         # acc_map = Map.update(Map.get(acc_map, snake_name, %{}).snake, :fire, :fire, snake.fire - 1)
-    #         {Snake.fire(snake, fireball_id), {acc_map, fireball_id + 1}}
-    #       _ ->
-    #         {nil, acc_map}
-    #       end
-    #   end)
-    # new_fireballs = []
+        case should_fire do
+          true when snake_dead != true and snake.fire != 0 -> # FIXME UNCOMMENT
+            snake = %{snake| fire: snake.fire - 1}
+            updated_snake_data = %{snake_data| snake: snake, fire: false}
+            acc_map = Map.put(acc_map, snake_name, updated_snake_data)
+            {Snake.fire(snake, fireball_id), {acc_map, fireball_id + 1}}
+          _ ->
+            {nil, {acc_map, fireball_id}}
+          end
+      end)
 
-    # fireballs = fireballs ++ Enum.filter(new_fireballs, fn(new_fireball) -> new_fireball != nil end)
+    fireballs = fireballs ++ Enum.filter(new_fireballs, fn(new_fireball) -> new_fireball != nil end)
 
-    # snake_1 = snake_map.snake_1.snake
-    # snake_2 = snake_map.snake_2.snake
+    snake_1 = snake_map.snake_1.snake
+    snake_2 = snake_map.snake_2.snake
 
-    # # CHECK FIREBALL COLLISIONS
-    # fireball_collision_checks = fireballs_collision(fireballs, board, [snake_1|snake_2], apples)
+    # CHECK FIREBALL COLLISIONS
+    fireball_collision_checks = fireballs_collision(fireballs, board, [snake_1]++[snake_2], apples)
 
-    # # MARK FIREBALLS FOR DELETION AT THE START OF A NEW ITERATION
-    # fireball_ids_to_remove = mark_fireballs(fireball_collision_checks)
+    # MARK FIREBALLS FOR DELETION AT THE START OF A NEW ITERATION
+    fireball_ids_to_remove = mark_fireballs(fireball_collision_checks)
 
-    # # MARK APPLES FOR DELETION AT THE START OF A NEW ITERATION
-    # apple_ids_to_remove = mark_apples(fireball_collision_checks) # FIXME : NADPISANE BEDZIE DODAC EATEN APPLES
+    # MARK APPLES FOR DELETION AT THE START OF A NEW ITERATION
+    apple_ids_to_remove = apple_ids_to_remove ++ mark_apples(fireball_collision_checks)  # FIXME : NADPISANE BEDZIE DODAC EATEN APPLES??
 
-    # # APPLY FIREBALL DAMAGE TO SNAKES USING 'Snake.remove_blockdown' AND SHORTEN THEIR TAILS
-    # {snake_1, snake_2} = snakes_fireball_damage(fireball_collision_checks, snake_1, snake_2)
+    # APPLY FIREBALL DAMAGE TO SNAKES USING 'Snake.remove_blockdown' AND SHORTEN THEIR TAILS
+    {snake_1, snake_2} = snakes_fireball_damage(fireball_collision_checks, snake_1, snake_2)
 
-    # snake_1_dead = snake_1_dead or length(snake_1.points) == 0
-    # snake_2_dead = snake_2_dead or length(snake_2.points) == 0
+    snake_1_dead = snake_1_dead or length(snake_1.points) == 0
+    snake_2_dead = snake_2_dead or length(snake_2.points) == 0
 
-    # snake_map = %{snake_map| snake_1: %{snake_map.snake_1| snake: snake_1}}
-    # snake_map = %{snake_map| snake_2: %{snake_map.snake_2| snake: snake_2}}
+    snake_map = %{snake_map| snake_1: %{snake_map.snake_1| snake: snake_1}}
+    snake_map = %{snake_map| snake_2: %{snake_map.snake_2| snake: snake_2}}
 
     game_status =
       case {snake_1_dead, snake_2_dead} do
@@ -299,7 +306,7 @@ defmodule Logic.GameLoop do
           :game_over
       end
 
-    game_staaaa = %{
+    %{
       snake_map: snake_map,
       board: board,
       apples: apples,
@@ -311,11 +318,6 @@ defmodule Logic.GameLoop do
       iteration: iteration + 1,
       status: game_status
     }
-
-    # IO.puts("3. game status")
-    # IO.inspect(game_staaaa)
-    game_staaaa
   end
-
 
 end
